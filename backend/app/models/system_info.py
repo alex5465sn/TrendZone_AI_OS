@@ -13,4 +13,7 @@ class SystemInfo(Base):
 
     version: Mapped[str] = mapped_column(String(20))
 
-    status: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(
+    String(20),
+    default="online",
+)
