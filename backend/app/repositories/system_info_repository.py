@@ -1,29 +1,38 @@
+"""
+TrendZone AI OS
+================================
+
+Repository responsável pelas informações
+institucionais do sistema.
+"""
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.models.system_info import SystemInfo
+from app.models.system_info import SystemInfo
+from app.repositories.base_repository import BaseRepository
 
 
-class SystemInfoRepository:
+class SystemInfoRepository(BaseRepository[SystemInfo]):
+    """
+    Repository da entidade SystemInfo.
+    """
 
-    @staticmethod
-    def create(
+    model = SystemInfo
+
+    # =====================================================
+    # PRIMEIRO REGISTRO
+    # =====================================================
+
+    @classmethod
+    def get_first(
+        cls,
         db: Session,
-        app_name: str,
-        version: str,
-    ) -> SystemInfo:
+    ) -> SystemInfo | None:
 
-        system = SystemInfo(
-            app_name=app_name,
-            version=version,
+        stmt = (
+            select(SystemInfo)
+            .limit(1)
         )
 
-        db.add(system)
-        db.commit()
-        db.refresh(system)
-
-        return system
-
-    @staticmethod
-    def get_first(db: Session):
-
-        return db.query(SystemInfo).first()
+        return db.execute(stmt).scalar_one_or_none()

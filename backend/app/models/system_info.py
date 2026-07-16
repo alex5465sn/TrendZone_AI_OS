@@ -1,19 +1,56 @@
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+"""
+TrendZone AI OS
 
-from backend.app.database.base import Base
+Model responsável pelas informações
+institucionais do sistema.
+
+Armazena informações gerais da instalação.
+"""
+
+from sqlalchemy import (
+    Index,
+    String,
+)
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+)
+
+from app.database.base import BaseModel
 
 
-class SystemInfo(Base):
+class SystemInfo(BaseModel):
+    """
+    Informações do sistema.
+    """
+
     __tablename__ = "system_info"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    __table_args__ = (
 
-    app_name: Mapped[str] = mapped_column(String(100))
+        Index("idx_system_uuid", "uuid"),
 
-    version: Mapped[str] = mapped_column(String(20))
+        Index("idx_system_app", "app_name"),
+
+    )
+
+    app_name: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    version: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+    )
 
     status: Mapped[str] = mapped_column(
-    String(20),
-    default="online",
-)
+        String(20),
+        default="ONLINE",
+    )
+
+    environment: Mapped[str] = mapped_column(
+        String(20),
+        default="development",
+    )

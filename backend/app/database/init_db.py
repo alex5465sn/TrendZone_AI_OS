@@ -1,9 +1,47 @@
-from backend.app.database.base import Base
-from backend.app.database.session import engine
+from time import perf_counter
 
-# Importa os modelos para que o SQLAlchemy conheça todas as tabelas
-from backend.app.models.system_info import SystemInfo
+from app.core.logger import TZLogger
+from app.database.base import Base
+from app.database.session import engine
+
+
+class DatabaseInitializer:
+    """
+    Responsável por inicializar
+    toda a estrutura do banco.
+    """
+
+    @staticmethod
+    def initialize():
+
+        TZLogger.info(
+            "DATABASE",
+            "Inicializando banco de dados..."
+        )
+
+        start = perf_counter()
+
+        try:
+
+            Base.metadata.create_all(bind=engine)
+
+            elapsed = perf_counter() - start
+
+            TZLogger.success(
+                "DATABASE",
+                f"Banco inicializado com sucesso ({elapsed:.2f}s)"
+            )
+
+        except Exception as e:
+
+            TZLogger.error(
+                "DATABASE",
+                str(e)
+            )
+
+            raise
 
 
 def init_database():
-    Base.metadata.create_all(bind=engine)
+
+    DatabaseInitializer.initialize()

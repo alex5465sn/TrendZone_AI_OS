@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.app.database.session import SessionLocal
-from backend.app.schemas.system_info import (
+from app.database.session import SessionLocal
+from app.schemas.system_info import (
     SystemInfoCreate,
     SystemInfoResponse,
 )
-from backend.app.services.system_info_service import (
+from app.services.system_info_service import (
     SystemInfoService,
 )
 
