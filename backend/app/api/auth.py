@@ -1,58 +1,89 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""
+TrendZone AI OS
+================================
+
+Authentication API
+
+Responsável pela autenticação
+dos usuários.
+"""
+
+from fastapi import APIRouter
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.database.session import get_db
-from app.schemas.auth import LoginRequest, Token
+from app.database import get_db
+
+from app.schemas.auth import (
+    LoginRequest,
+    Token,
+)
+
 from app.security.auth import authenticate_user
 from app.security.jwt import create_access_token
-from app.security.dependencies import get_current_user
-from app.schemas.user import UserResponse
+
+from app.api.response import ResponseBuilder
 
 router = APIRouter(
+
     prefix="/auth",
+
     tags=["Authentication"],
+
 )
 
 
 @router.post(
+
     "/login",
+
     response_model=Token,
+
 )
+
 def login(
-    data: LoginRequest,
+
+    credentials: LoginRequest,
+
     db: Session = Depends(get_db),
+
 ):
 
     user = authenticate_user(
-        db,
-        data.email,
-        data.password,
-    )
 
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="E-mail ou senha inválidos.",
-        )
+        db,
+
+        credentials.email,
+
+        credentials.password,
+
+    )
 
     token = create_access_token(
+
         {
+
             "sub": user.email,
-            "id": user.id,
+
         }
+
     )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-    }
+    return Token(
+
+        access_token=token,
+
+        token_type="bearer",
+
+    )
 
 
-@router.get(
-    "/me",
-    response_model=UserResponse,
-)
-def get_me(
-    current_user=Depends(get_current_user),
-):
-    return current_user
+@router.get("/validate")
+
+def validate():
+
+    return ResponseBuilder.success(
+
+        message="Token válido.",
+
+    )

@@ -2,175 +2,66 @@
 TrendZone AI OS
 ================================
 
-Scout Service.
+Scout Service
 
-Responsável pelo Pipeline Oficial
-de prospecção de produtos.
-
-Pipeline
-
-Buscar
-↓
-
-Mapear
-↓
-
-Validar
-↓
-
-Calcular Score
-↓
-
-Tomar decisão
-↓
-
-Gerar relatório
+Camada de orquestração do Scout.
 """
 
-from app.integrations.shopee.scout import ShopeeScout
-from app.mappers.product_mapper import ProductMapper
+from sqlalchemy.orm import Session
+
+from app.pipelines.scout_pipeline import (
+    ScoutPipeline,
+)
 
 from app.services.base_service import BaseService
-from app.services.product_validator import ProductValidator
-from app.services.product_score import ProductScore
-from app.services.decision_engine import DecisionEngine
-from app.services.executive_report import ExecutiveReport
 
 
 class ScoutService(BaseService):
 
     SERVICE_NAME = "SCOUT_SERVICE"
 
-    def __init__(self, db=None):
+    def __init__(
 
-        self.db = db
+        self,
 
-        self.scout = ShopeeScout()
+        db: Session,
 
-    # =====================================================
-    # PIPELINE
-    # =====================================================
+    ):
 
-    def search_products(self):
+        self.pipeline = ScoutPipeline(db)
 
-        self.log_info("Iniciando Pipeline Scout...")
+    def search_products(
 
-        raw_products = self.fetch_products()
+        self,
 
-        products = self.map_products(raw_products)
+        keyword: str = "",
 
-        products = self.validate_products(products)
+        page: int = 1,
 
-        products = self.score_products(products)
+        limit: int = 20,
 
-        products = self.decision_products(products)
+    ):
 
-        reports = self.generate_reports(products)
+        self.log_info(
 
-        self.log_success(
-            f"{len(reports)} relatório(s) gerado(s)."
+            "Executando Scout Pipeline..."
+
         )
 
-        return reports
+        reports = self.pipeline.run(
 
-    # =====================================================
-    # ETAPA 1
-    # =====================================================
+            keyword,
 
-    def fetch_products(self):
+            page,
 
-        self.log_info("Buscando produtos...")
+            limit,
 
-        return self.scout.get_products()
+        )
 
-    # =====================================================
-    # ETAPA 2
-    # =====================================================
+        self.log_success(
 
-    def map_products(self, products):
+            f"{len(reports)} relatório(s) gerado(s)."
 
-        self.log_info("Mapeando produtos...")
-
-        return [
-
-            ProductMapper.from_shopee(product)
-
-            for product in products
-
-        ]
-
-    # =====================================================
-    # ETAPA 3
-    # =====================================================
-
-    def validate_products(self, products):
-
-        self.log_info("Validando produtos...")
-
-        valid_products = []
-
-        for product in products:
-
-            ProductValidator.validate(product)
-
-            valid_products.append(product)
-
-        return valid_products
-
-    # =====================================================
-    # ETAPA 4
-    # =====================================================
-
-    def score_products(self, products):
-
-        self.log_info("Calculando Score...")
-
-        for product in products:
-
-            product["score"] = ProductScore.calculate(
-
-                commission=product["commission"],
-
-                rating=product["rating"],
-
-                sales=product["sales"],
-
-            )
-
-        return products
-
-    # =====================================================
-    # ETAPA 5
-    # =====================================================
-
-    def decision_products(self, products):
-
-        self.log_info("Classificando produtos...")
-
-        for product in products:
-
-            product["decision"] = DecisionEngine.classify(
-                product
-            )
-
-        return products
-
-    # =====================================================
-    # ETAPA 6
-    # =====================================================
-
-    def generate_reports(self, products):
-
-        self.log_info("Gerando relatórios...")
-
-        reports = []
-
-        for product in products:
-
-            reports.append(
-
-                ExecutiveReport.build(product)
-
-            )
+        )
 
         return reports

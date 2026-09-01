@@ -17,7 +17,7 @@ export default function DashboardLayout({
             sx={{
                 display: "flex",
                 minHeight: "100vh",
-                backgroundColor: "#0F172A",
+                backgroundColor: "#0B1120",
             }}
         >
             <Sidebar />
@@ -27,6 +27,7 @@ export default function DashboardLayout({
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
+                    minWidth: 0,
                 }}
             >
                 <Header />
@@ -35,6 +36,7 @@ export default function DashboardLayout({
                     sx={{
                         flex: 1,
                         p: 4,
+                        overflow: "auto",
                     }}
                 >
                     {children}

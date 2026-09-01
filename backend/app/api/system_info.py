@@ -1,39 +1,61 @@
-from fastapi import APIRouter, Depends
+"""
+TrendZone AI OS
+================================
+
+System Information API
+
+Informações administrativas
+do sistema.
+"""
+
+from fastapi import APIRouter
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.database.session import SessionLocal
-from app.schemas.system_info import (
-    SystemInfoCreate,
-    SystemInfoResponse,
-)
-from app.services.system_info_service import (
-    SystemInfoService,
-)
+from app.database import get_db
+
+from app.api.response import ResponseBuilder
+
+from app.services.system_info_service import SystemInfoService
 
 router = APIRouter(
-    prefix="/system-info",
-    tags=["System Info"],
+
+    prefix="/system",
+
+    tags=["System"],
+
 )
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@router.get("/")
+def system_info(
 
-
-@router.post("/", response_model=SystemInfoResponse)
-def create_system(
-    data: SystemInfoCreate,
     db: Session = Depends(get_db),
-):
-    return SystemInfoService.create(db, data)
 
-
-@router.get("/", response_model=SystemInfoResponse | None)
-def get_system(
-    db: Session = Depends(get_db),
 ):
-    return SystemInfoService.get_first(db)
+
+    info = SystemInfoService.get_first(db)
+
+    if info is None:
+
+        return ResponseBuilder.error(
+
+            message="Informações do sistema não cadastradas.",
+
+            status_code=404,
+
+        )
+
+    return ResponseBuilder.success(
+
+        data={
+
+            "app_name": info.app_name,
+
+            "version": info.version,
+
+            "status": info.status,
+
+        }
+
+    )

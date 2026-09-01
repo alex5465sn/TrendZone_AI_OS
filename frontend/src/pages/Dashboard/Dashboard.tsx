@@ -4,31 +4,44 @@ import {
     Box,
     Grid,
     Typography,
+    Card,
+    CardContent,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Avatar,
+    Chip,
+    CircularProgress,
+    Alert,
+    Button,
 } from "@mui/material";
+
+import InventoryIcon from "@mui/icons-material/Inventory2";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import StatCard from "../../components/dashboard/StatCard";
 import HealthCard from "../../components/health/HealthCard";
 
-import {
-    getDashboard,
-} from "../../services/dashboardService";
+import { getDashboard, getHealth } from "../../services/dashboardService";
+import type { DashboardStats } from "../../services/dashboardService";
+import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
 
-import type {
-    DashboardData,
-} from "../../services/dashboardService";
-
-import {
-    getHealth,
-} from "../../services/healthService";
-
-import type {
-    HealthData,
-} from "../../services/healthService";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
 
-    const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-    const [health, setHealth] = useState<HealthData | null>(null);
+    const [dashboard, setDashboard] = useState<DashboardStats | null>(null);
+    const [health, setHealth] = useState<Record<string, string> | null>(null);
+    const [products, setProducts] = useState<ShopeeProductNode[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
 
@@ -36,15 +49,28 @@ export default function Dashboard() {
 
             try {
 
-                const dashboardData = await getDashboard();
-                const healthData = await getHealth();
+                setLoading(true);
+
+                const [dashboardData, healthData, productsData] = await Promise.all([
+                    getDashboard(),
+                    getHealth(),
+                    searchShopeeProducts({ keyword: "tendencia", limit: 5 }),
+                ]);
 
                 setDashboard(dashboardData);
                 setHealth(healthData);
+                setProducts(productsData.nodes || []);
 
-            } catch (error) {
+                setError("");
 
-                console.error(error);
+            } catch (err) {
+
+                console.error(err);
+                setError("Erro ao carregar dados do painel.");
+
+            } finally {
+
+                setLoading(false);
 
             }
 
@@ -54,12 +80,22 @@ export default function Dashboard() {
 
     }, []);
 
-    if (!dashboard || !health) {
+    if (loading) {
 
         return (
-            <Typography>
-                Carregando painel...
-            </Typography>
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+                <CircularProgress />
+            </Box>
+        );
+
+    }
+
+    if (error) {
+
+        return (
+            <Alert severity="error" sx={{ m: 2 }}>
+                {error}
+            </Alert>
         );
 
     }
@@ -68,100 +104,274 @@ export default function Dashboard() {
 
         <Box>
 
-            <Typography
-                variant="h4"
-                fontWeight="bold"
-                mb={4}
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 4,
+                }}
             >
-                Painel
-            </Typography>
 
-            <Grid container spacing={3}>
+                <Typography
+                    variant="h4"
+                    fontWeight="bold"
+                    color="#F8FAFC"
+                >
+                    Painel de Controle
+                </Typography>
 
-                <Grid item xs={12} md={6} lg={3}>
+                <Typography
+                    variant="body2"
+                    color="#94A3B8"
+                >
+                    v{dashboard?.version || "2.0"}
+                </Typography>
+
+            </Box>
+
+            <Grid container spacing={3} mb={4}>
+
+                <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title="Produtos"
-                        value={dashboard.products}
+                        title="Produtos Rastreados"
+                        value={dashboard?.total_products || 0}
+                        subtitle="No banco de dados"
+                        icon={InventoryIcon}
+                        color="#38BDF8"
                     />
                 </Grid>
 
-                <Grid item xs={12} md={6} lg={3}>
+                <Grid item xs={12} sm={6} md={3}>
                     <StatCard
-                        title="Pontuação"
-                        value={dashboard.score}
-                        color="#22C55E"
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={6} lg={3}>
-                    <StatCard
-                        title="Comissão"
-                        value={`${dashboard.commission}%`}
-                        color="#F59E0B"
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={6} lg={3}>
-                    <StatCard
-                        title="Produtos IA"
-                        value={dashboard.ai_products}
+                        title="Pipeline IA"
+                        value={dashboard?.pipeline || "READY"}
+                        subtitle="Status operacional"
+                        icon={SmartToyIcon}
                         color="#8B5CF6"
+                    />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                    <StatCard
+                        title="Status do Sistema"
+                        value={dashboard?.status || "online"}
+                        subtitle="Backend ativo"
+                        icon={TrendingUpIcon}
+                        color="#10B981"
+                    />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                    <StatCard
+                        title="Shopee API"
+                        value={products.length > 0 ? "Conectada" : "Verificando"}
+                        subtitle={products.length > 0 ? `${products.length} produtos carregados` : "Aguardando dados"}
+                        icon={AttachMoneyIcon}
+                        color={products.length > 0 ? "#F59E0B" : "#EF4444"}
                     />
                 </Grid>
 
             </Grid>
 
-            <Typography
-                variant="h5"
-                mt={6}
-                mb={3}
-                fontWeight="bold"
-            >
-                Saúde do Sistema
-            </Typography>
+            <Grid container spacing={3} mb={4}>
 
-            <Grid container spacing={3}>
+                <Grid item xs={12} md={8}>
 
-                <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Backend"
-                        status={health.backend}
-                    />
+                    <Card
+                        sx={{
+                            background: "#111827",
+                            borderRadius: 3,
+                            border: "1px solid #1E293B",
+                            height: "100%",
+                        }}
+                    >
+
+                        <CardContent>
+
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    mb: 3,
+                                }}
+                            >
+
+                                <Typography
+                                    variant="h6"
+                                    fontWeight="bold"
+                                    color="#F8FAFC"
+                                >
+                                    Produtos em Destaque - Shopee
+                                </Typography>
+
+                                <Button
+                                    component={Link}
+                                    to="/products"
+                                    endIcon={<ArrowForwardIcon />}
+                                    sx={{
+                                        color: "#38BDF8",
+                                        textTransform: "none",
+                                    }}
+                                >
+                                    Ver todos
+                                </Button>
+
+                            </Box>
+
+                            <TableContainer>
+
+                                <Table size="small">
+
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ color: "#94A3B8" }}>Produto</TableCell>
+                                            <TableCell sx={{ color: "#94A3B8" }}>Preço</TableCell>
+                                            <TableCell sx={{ color: "#94A3B8" }}>Comissão</TableCell>
+                                            <TableCell sx={{ color: "#94A3B8" }}>Vendas</TableCell>
+                                            <TableCell sx={{ color: "#94A3B8" }}>Ação</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+
+                                    <TableBody>
+
+                                        {products.map((product) => (
+
+                                            <TableRow
+                                                key={product.itemId}
+                                                sx={{
+                                                    "&:hover": {
+                                                        backgroundColor: "#1E293B",
+                                                    },
+                                                }}
+                                            >
+
+                                                <TableCell>
+                                                    <Box
+                                                        sx={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            gap: 2,
+                                                        }}
+                                                    >
+                                                        <Avatar
+                                                            src={product.imageUrl}
+                                                            alt={product.productName}
+                                                            variant="rounded"
+                                                            sx={{ width: 40, height: 40 }}
+                                                        />
+                                                        <Typography
+                                                            color="#F8FAFC"
+                                                            sx={{
+                                                                maxWidth: 300,
+                                                                overflow: "hidden",
+                                                                textOverflow: "ellipsis",
+                                                                whiteSpace: "nowrap",
+                                                            }}
+                                                        >
+                                                            {product.productName}
+                                                        </Typography>
+                                                    </Box>
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    <Typography color="#F8FAFC">
+                                                        R$ {product.price}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    <Chip
+                                                        label={`${Math.round(parseFloat(product.commissionRate) * 100)}%`}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: "#10B98133",
+                                                            color: "#10B981",
+                                                            fontWeight: 600,
+                                                        }}
+                                                    />
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    <Typography color="#F8FAFC">
+                                                        {product.sales}
+                                                    </Typography>
+                                                </TableCell>
+
+                                                <TableCell>
+                                                    <Button
+                                                        href={product.offerLink}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        size="small"
+                                                        endIcon={<OpenInNewIcon />}
+                                                        sx={{
+                                                            color: "#38BDF8",
+                                                            textTransform: "none",
+                                                        }}
+                                                    >
+                                                        Oferta
+                                                    </Button>
+                                                </TableCell>
+
+                                            </TableRow>
+
+                                        ))}
+
+                                    </TableBody>
+
+                                </Table>
+
+                            </TableContainer>
+
+                        </CardContent>
+
+                    </Card>
+
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Banco de Dados"
-                        status={health.database}
-                    />
-                </Grid>
 
-                <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Dashboard API"
-                        status={health.dashboard}
-                    />
-                </Grid>
+                    <Card
+                        sx={{
+                            background: "#111827",
+                            borderRadius: 3,
+                            border: "1px solid #1E293B",
+                            height: "100%",
+                        }}
+                    >
 
-                <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Frontend"
-                        status={health.frontend}
-                    />
-                </Grid>
+                        <CardContent>
 
-                <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Scout IA"
-                        status={health.scout}
-                    />
-                </Grid>
+                            <Typography
+                                variant="h6"
+                                fontWeight="bold"
+                                color="#F8FAFC"
+                                mb={3}
+                            >
+                                Saúde do Sistema
+                            </Typography>
 
-                <Grid item xs={12} md={4}>
-                    <HealthCard
-                        title="Shopee API"
-                        status={health.shopee}
-                    />
+                            <Grid container spacing={2}>
+
+                                {health && Object.entries(health).map(([key, value]) => (
+
+                                    <Grid item xs={12} key={key}>
+                                        <HealthCard
+                                            title={key.replace(/_/g, " ").toUpperCase()}
+                                            status={String(value)}
+                                        />
+                                    </Grid>
+
+                                ))}
+
+                            </Grid>
+
+                        </CardContent>
+
+                    </Card>
+
                 </Grid>
 
             </Grid>

@@ -24,6 +24,8 @@ from app.services.decision_engine import DecisionEngine
 from app.services.executive_report import ExecutiveReport
 
 from app.services.scout_service import ScoutService
+from app.services.ranking_engine import RankingEngine
+from app.services.marketplace_service import MarketplaceBusiness
 
 __all__ = [
 
@@ -40,4 +42,6 @@ __all__ = [
     "ExecutiveReport",
 
     "ScoutService",
+    "RankingEngine",
+    "MarketplaceBusiness",
 ]

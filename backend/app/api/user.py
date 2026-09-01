@@ -1,28 +1,83 @@
-from fastapi import APIRouter, Depends
+"""
+TrendZone AI OS
+================================
+
+Users API
+
+Endpoints oficiais da entidade User.
+"""
+
+from fastapi import APIRouter
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.database.session import get_db
-from app.schemas.user import UserCreate, UserResponse
+from app.database import get_db
+
+from app.schemas.user import (
+    UserCreate,
+    UserResponse,
+)
+
 from app.services.user_service import UserService
-from app.security.dependencies import get_current_user
+
+from app.api.response import ResponseBuilder
 
 router = APIRouter(
+
     prefix="/users",
+
     tags=["Users"],
+
 )
 
 
-@router.post("/", response_model=UserResponse)
-def create_user(
-    data: UserCreate,
-    db: Session = Depends(get_db),
-):
-    return UserService.create(db, data)
+@router.get("/")
 
-
-@router.get("/", response_model=list[UserResponse])
 def get_users(
+
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+
 ):
-    return UserService.get_all(db)
+
+    users = UserService.get_all(db)
+
+    return ResponseBuilder.success(
+
+        data=[
+
+            UserResponse.model_validate(user).model_dump(mode="json")
+
+            for user in users
+
+        ]
+
+    )
+
+
+@router.post("/")
+
+def create_user(
+
+    data: UserCreate,
+
+    db: Session = Depends(get_db),
+
+):
+
+    user = UserService.create(
+
+        db,
+
+        data,
+
+    )
+
+    return ResponseBuilder.success(
+
+        data=UserResponse.model_validate(user).model_dump(mode="json"),
+
+        message="Usuário criado.",
+
+        status_code=201,
+
+    )

@@ -1,27 +1,53 @@
-class ProductMapper:
+"""
+TrendZone AI OS
+================================
+
+Trend Product Mapper
+
+Converte DTOs de marketplaces
+para o modelo de domínio.
+"""
+
+from app.domain.product import TrendProduct
+
+from app.integrations.shopee.dto.product_dto import (
+    ProductDTO,
+)
+
+
+class TrendProductMapper:
 
     @staticmethod
-    def from_shopee(product: dict) -> dict:
+    def from_shopee(
+        dto: ProductDTO,
+    ) -> TrendProduct:
 
-        return {
+        return TrendProduct(
 
-            "item_id": product["itemId"],
+            item_id=dto.item_id,
 
-            "shop_id": product["shopId"],
+            shop_id=dto.shop_id,
 
-            "name": product["productName"],
+            name=dto.name,
 
-            "price": product["price"],
+            image=dto.image,
 
-            "commission": product["commissionRate"],
+            price=dto.price,
 
-            "rating": product["ratingStar"],
+            commission=dto.commission,
 
-            "sales": product["sales"],
+            rating=dto.rating,
 
-            "image": product["imageUrl"],
+            sales=dto.sales,
 
-            "offer_link": product["offerLink"],
+            stock=dto.stock,
 
-            "active": True,
-        }
+            currency=dto.currency,
+
+            offer_link=dto.offer_link,
+
+            category=dto.category,
+
+            marketplace=dto.marketplace,
+
+        )

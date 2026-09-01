@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,12 +36,31 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     #################################
+    # SHOPEE
+    #################################
+
+    SHOPEE_GRAPHQL_URL: str = ""
+
+    SHOPEE_APP_ID: str = ""
+
+    SHOPEE_SECRET: str = ""
+
+    SHOPEE_ACCESS_TOKEN: str = ""
+
+    SHOPEE_REFRESH_TOKEN: str = ""
+
+    #################################
     # ENV
     #################################
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+
+        env_file=(
+            Path(__file__).resolve().parents[3] / ".env"
+        ),
+
         extra="ignore",
+
     )
 
 

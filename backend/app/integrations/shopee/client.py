@@ -1,48 +1,160 @@
-from typing import Optional
+"""
+TrendZone AI OS
+================================
+
+Shopee HTTP Client
+
+Responsável pela comunicação HTTP
+com a Shopee Affiliate API.
+
+Não contém regras de negócio.
+
+Responsabilidades:
+
+- REST
+- GraphQL
+- Headers
+- HTTP
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
 
 import requests
 
-from app.integrations.shopee.endpoints import BASE_URL
+from app.core.settings import settings
+from app.integrations.shopee.signature import ShopeeSignature
 
 
 class ShopeeClient:
 
+    DEFAULT_TIMEOUT = 60
+
     def __init__(
         self,
-        access_token: Optional[str] = None,
+        access_token: str | None = None,
     ):
+
         self.access_token = access_token
 
-    def get_headers(self):
+    # =====================================================
+    # HEADERS
+    # =====================================================
+
+    def get_headers(
+        self,
+        payload: dict[str, Any],
+    ) -> dict[str, str]:
 
         headers = {
             "Content-Type": "application/json",
         }
 
-        if self.access_token:
-
-            headers["Authorization"] = (
-                f"Bearer {self.access_token}"
+        headers.update(
+            ShopeeSignature.authorization_header(
+                payload
             )
+        )
 
         return headers
 
-    def execute(
-        self,
-        query: str,
-        variables: dict | None = None,
-    ):
+    # =====================================================
+    # REST GET
+    # =====================================================
 
-        payload = {
-            "query": query,
-            "variables": variables or {},
-        }
+    def get(
+        self,
+        endpoint: str,
+        params: dict | None = None,
+    ) -> dict[str, Any]:
+
+        payload = params or {}
+
+        response = requests.get(
+
+            endpoint,
+
+            headers=self.get_headers(payload),
+
+            params=params,
+
+            timeout=self.DEFAULT_TIMEOUT,
+
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    # =====================================================
+    # REST POST
+    # =====================================================
+
+    def post(
+        self,
+        endpoint: str,
+        payload: dict | None = None,
+    ) -> dict[str, Any]:
+
+        body = payload or {}
 
         response = requests.post(
-            BASE_URL,
-            json=payload,
-            headers=self.get_headers(),
-            timeout=30,
+
+            endpoint,
+
+            headers=self.get_headers(body),
+
+            data=json.dumps(
+                body,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ),
+
+            timeout=self.DEFAULT_TIMEOUT,
+
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    # =====================================================
+    # GRAPHQL
+    # =====================================================
+
+    def execute(
+        self,
+        *,
+        query: str,
+        variables: dict | None = None,
+    ) -> dict[str, Any]:
+
+        payload = {
+
+            "query": query,
+
+            "variables": variables or {},
+
+        }
+
+        body = json.dumps(
+            payload,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+
+        response = requests.post(
+
+            settings.SHOPEE_GRAPHQL_URL,
+
+            headers=self.get_headers(payload),
+
+            data=body,
+
+            timeout=self.DEFAULT_TIMEOUT,
+
         )
 
         response.raise_for_status()

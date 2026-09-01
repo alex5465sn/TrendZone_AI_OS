@@ -1,6 +1,18 @@
+"""
+TrendZone AI OS
+================================
+
+Health API
+
+Responsável por informar o estado
+geral da aplicação.
+
+Enterprise Endpoint.
+"""
+
 from fastapi import APIRouter
 
-from app.core.settings import settings
+from app.api.response import ResponseBuilder
 
 router = APIRouter(
     prefix="/health",
@@ -11,12 +23,18 @@ router = APIRouter(
 @router.get("/")
 def health():
 
-    return {
-        "backend": "online",
-        "database": "online",
-        "dashboard": "online",
-        "frontend": "online",
-        "scout": "development",
-        "shopee": "disconnected",
-        "version": settings.VERSION,
-    }
+    return ResponseBuilder.success(
+
+        data={
+
+            "status": "online",
+
+            "service": "TrendZone AI OS",
+
+            "version": "2.0",
+
+        },
+
+        message="Sistema operacional.",
+
+    )

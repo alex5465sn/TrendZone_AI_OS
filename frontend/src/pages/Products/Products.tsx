@@ -1,75 +1,107 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import {
     Box,
     Typography,
     CircularProgress,
     Alert,
+    Button,
+    TextField,
+    Grid,
+    Chip,
 } from "@mui/material";
 
-import ProductSearch from "../../components/products/ProductSearch";
-import ProductFilters from "../../components/products/ProductFilters";
-import ProductForm from "../../components/products/ProductForm";
-import ProductTable from "../../components/products/ProductTable";
+import SearchIcon from "@mui/icons-material/Search";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import StarIcon from "@mui/icons-material/Star";
 
+import ShopeeProductTable from "../../components/products/ShopeeProductTable";
 import {
-    getProducts,
-    type Product,
-} from "../../services/productService";
+    searchShopeeProducts,
+    type ShopeeProductNode,
+} from "../../services/marketplaceService";
+
+const categories = [
+    "Eletrônicos",
+    "Casa",
+    "Moda",
+    "Beleza",
+    "Esportes",
+    "Brinquedos",
+    "Automotivo",
+];
 
 export default function Products() {
 
-    const [products, setProducts] = useState<Product[]>([]);
-
+    const [products, setProducts] = useState<ShopeeProductNode[]>([]);
     const [loading, setLoading] = useState(true);
-
     const [error, setError] = useState("");
+    const [keyword, setKeyword] = useState("tendencia");
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-    async function loadProducts() {
+    const loadProducts = useCallback(async (search: string) => {
 
         try {
 
             setLoading(true);
-
-            const data = await getProducts();
-
-            setProducts(data);
-
             setError("");
 
-        }
+            const data = await searchShopeeProducts({
+                keyword: search,
+                page: 1,
+                limit: 20,
+                sortType: 1,
+            });
 
-        catch (err) {
+            setProducts(data.nodes || []);
+
+        } catch (err) {
 
             console.error(err);
+            setError("Erro ao buscar produtos na Shopee.");
 
-            setError("Erro ao carregar produtos.");
-
-        }
-
-        finally {
+        } finally {
 
             setLoading(false);
 
         }
 
-    }
+    }, []);
 
     useEffect(() => {
 
-        loadProducts();
+        loadProducts(keyword);
 
-    }, []);
+    }, [keyword, loadProducts]);
 
-    if (loading) {
+    function handleSearch() {
 
-        return <CircularProgress />;
+        loadProducts(keyword);
 
     }
 
-    if (error) {
+    function handleCategory(category: string) {
 
-        return <Alert severity="error">{error}</Alert>;
+        setActiveCategory(category);
+        setKeyword(category);
+
+    }
+
+    function handleAdd(product: ShopeeProductNode) {
+
+        console.log("Adicionar ao tracker:", product);
+        alert(`Produto "${product.productName}" adicionado ao tracker. (integração com banco em desenvolvimento)`);
+
+    }
+
+    if (loading) {
+
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+                <CircularProgress />
+            </Box>
+        );
 
     }
 
@@ -80,24 +112,163 @@ export default function Products() {
             <Typography
                 variant="h4"
                 fontWeight="bold"
-                mb={4}
+                color="#F8FAFC"
+                mb={1}
             >
-                Produtos
+                Produtos Shopee
             </Typography>
 
-            <ProductSearch
-                value=""
-                onChange={() => {}}
-            />
+            <Typography
+                variant="body1"
+                color="#94A3B8"
+                mb={4}
+            >
+                Busque produtos em tempo real e identifique oportunidades de afiliados.
+            </Typography>
 
-            <ProductFilters />
+            <Box
+                sx={{
+                    display: "flex",
+                    gap: 2,
+                    mb: 3,
+                    flexWrap: "wrap",
+                }}
+            >
 
-            <ProductForm
-                onCreated={loadProducts}
-            />
+                <TextField
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="Ex: fone de ouvido, smartwatch, bolsas..."
+                    sx={{
+                        flex: 1,
+                        minWidth: 300,
+                        backgroundColor: "#111827",
+                        borderRadius: 2,
+                        input: { color: "#F8FAFC" },
+                    }}
+                />
 
-            <ProductTable
+                <Button
+                    variant="contained"
+                    startIcon={<SearchIcon />}
+                    onClick={handleSearch}
+                    sx={{
+                        backgroundColor: "#2563EB",
+                        textTransform: "none",
+                        borderRadius: 2,
+                        px: 4,
+                    }}
+                >
+                    Buscar
+                </Button>
+
+            </Box>
+
+            <Box
+                sx={{
+                    display: "flex",
+                    gap: 1,
+                    mb: 4,
+                    flexWrap: "wrap",
+                }}
+            >
+
+                {categories.map((category) => (
+
+                    <Chip
+                        key={category}
+                        label={category}
+                        onClick={() => handleCategory(category)}
+                        sx={{
+                            backgroundColor: activeCategory === category ? "#2563EB" : "#1E293B",
+                            color: "#F8FAFC",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            "&:hover": {
+                                backgroundColor: "#2563EB",
+                            },
+                        }}
+                    />
+
+                ))}
+
+            </Box>
+
+            <Grid container spacing={3} mb={4}>
+
+                <Grid item xs={12} md={4}>
+                    <Box
+                        sx={{
+                            p: 3,
+                            borderRadius: 3,
+                            backgroundColor: "#111827",
+                            border: "1px solid #1E293B",
+                        }}
+                    >
+                        <Typography color="#94A3B8" mb={1}>
+                            <TrendingUpIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+                            Produtos Encontrados
+                        </Typography>
+                        <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
+                            {products.length}
+                        </Typography>
+                    </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                    <Box
+                        sx={{
+                            p: 3,
+                            borderRadius: 3,
+                            backgroundColor: "#111827",
+                            border: "1px solid #1E293B",
+                        }}
+                    >
+                        <Typography color="#94A3B8" mb={1}>
+                            <AttachMoneyIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+                            Maior Comissão
+                        </Typography>
+                        <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
+                            {products.length > 0
+                                ? `${Math.max(...products.map((p) => Number(p.commissionRate) * 100)).toFixed(1)}%`
+                                : "-"}
+                        </Typography>
+                    </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                    <Box
+                        sx={{
+                            p: 3,
+                            borderRadius: 3,
+                            backgroundColor: "#111827",
+                            border: "1px solid #1E293B",
+                        }}
+                    >
+                        <Typography color="#94A3B8" mb={1}>
+                            <StarIcon sx={{ verticalAlign: "middle", mr: 1 }} />
+                            Melhor Avaliação
+                        </Typography>
+                        <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
+                            {products.length > 0
+                                ? Math.max(...products.map((p) => Number(p.ratingStar))).toFixed(1)
+                                : "-"}
+                        </Typography>
+                    </Box>
+                </Grid>
+
+            </Grid>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    {error}
+                </Alert>
+            )}
+
+            <ShopeeProductTable
                 products={products}
+                onAdd={handleAdd}
             />
 
         </Box>

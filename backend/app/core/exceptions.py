@@ -1,20 +1,5 @@
-"""
-TrendZone AI OS
-================================
-
-Exceções oficiais da aplicação.
-
-Toda exceção do sistema deve herdar
-de TrendZoneException.
-
-Nunca utilize:
-
-- ValueError
-- RuntimeError
-- Exception
-
-diretamente nas regras de negócio.
-"""
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 
 class TrendZoneException(Exception):
@@ -28,49 +13,64 @@ class TrendZoneException(Exception):
         self,
         message: str | None = None,
     ):
+        self.message = message or self.default_message
+        super().__init__(self.message)
 
-        super().__init__(
-            message or self.default_message
-        )
+
+# =====================================================
+# EXCEPTION HANDLERS
+# =====================================================
+
+async def trendzone_exception_handler(
+    request: Request,
+    exc: TrendZoneException,
+):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "success": False,
+            "error": exc.message,
+            "type": exc.__class__.__name__,
+        },
+    )
+
+
+async def generic_exception_handler(
+    request: Request,
+    exc: Exception,
+):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": "Erro interno do servidor.",
+            "detail": str(exc),
+            "type": exc.__class__.__name__,
+        },
+    )
 
 
 # =====================================================
 # VALIDAÇÃO
 # =====================================================
 
-
-class ValidationException(
-    TrendZoneException,
-):
-
+class ValidationException(TrendZoneException):
     default_message = "Erro de validação."
 
 
-class InvalidPriceException(
-    ValidationException,
-):
-
+class InvalidPriceException(ValidationException):
     default_message = "Preço inválido."
 
 
-class InvalidCommissionException(
-    ValidationException,
-):
-
+class InvalidCommissionException(ValidationException):
     default_message = "Comissão inválida."
 
 
-class InvalidRatingException(
-    ValidationException,
-):
-
+class InvalidRatingException(ValidationException):
     default_message = "Avaliação inválida."
 
 
-class InvalidSalesException(
-    ValidationException,
-):
-
+class InvalidSalesException(ValidationException):
     default_message = "Quantidade de vendas inválida."
 
 
@@ -78,25 +78,15 @@ class InvalidSalesException(
 # PRODUTOS
 # =====================================================
 
-
-class ProductException(
-    TrendZoneException,
-):
-
+class ProductException(TrendZoneException):
     default_message = "Erro relacionado ao produto."
 
 
-class ProductAlreadyExists(
-    ProductException,
-):
-
+class ProductAlreadyExists(ProductException):
     default_message = "Produto já cadastrado."
 
 
-class ProductNotFound(
-    ProductException,
-):
-
+class ProductNotFound(ProductException):
     default_message = "Produto não encontrado."
 
 
@@ -104,32 +94,19 @@ class ProductNotFound(
 # USUÁRIOS
 # =====================================================
 
-
-class UserException(
-    TrendZoneException,
-):
-
+class UserException(TrendZoneException):
     default_message = "Erro relacionado ao usuário."
 
 
-class UserAlreadyExists(
-    UserException,
-):
-
+class UserAlreadyExists(UserException):
     default_message = "Usuário já cadastrado."
 
 
-class UserNotFound(
-    UserException,
-):
-
+class UserNotFound(UserException):
     default_message = "Usuário não encontrado."
 
 
-class InvalidCredentials(
-    UserException,
-):
-
+class InvalidCredentials(UserException):
     default_message = "Credenciais inválidas."
 
 
@@ -137,32 +114,19 @@ class InvalidCredentials(
 # AUTENTICAÇÃO
 # =====================================================
 
-
-class AuthenticationException(
-    TrendZoneException,
-):
-
+class AuthenticationException(TrendZoneException):
     default_message = "Falha de autenticação."
 
 
-class AuthorizationException(
-    TrendZoneException,
-):
-
+class AuthorizationException(TrendZoneException):
     default_message = "Acesso negado."
 
 
-class InvalidToken(
-    AuthenticationException,
-):
-
+class InvalidToken(AuthenticationException):
     default_message = "Token inválido."
 
 
-class ExpiredToken(
-    AuthenticationException,
-):
-
+class ExpiredToken(AuthenticationException):
     default_message = "Token expirado."
 
 
@@ -170,44 +134,39 @@ class ExpiredToken(
 # BANCO
 # =====================================================
 
-
-class DatabaseException(
-    TrendZoneException,
-):
-
+class DatabaseException(TrendZoneException):
     default_message = "Erro no banco de dados."
+
+
+# =====================================================
+# SYSTEM INFO
+# =====================================================
+
+class SystemInfoException(TrendZoneException):
+    default_message = "Erro relacionado às informações do sistema."
+
+
+class SystemInfoNotFound(SystemInfoException):
+    default_message = "Informações do sistema não encontradas."
 
 
 # =====================================================
 # PIPELINE
 # =====================================================
 
-
-class PipelineException(
-    TrendZoneException,
-):
-
+class PipelineException(TrendZoneException):
     default_message = "Erro no Pipeline."
 
 
-class ScoutException(
-    PipelineException,
-):
-
+class ScoutException(PipelineException):
     default_message = "Erro durante o Scout."
 
 
-class DecisionException(
-    PipelineException,
-):
-
+class DecisionException(PipelineException):
     default_message = "Erro no Decision Engine."
 
 
-class ReportException(
-    PipelineException,
-):
-
+class ReportException(PipelineException):
     default_message = "Erro na geração do relatório."
 
 
@@ -215,23 +174,13 @@ class ReportException(
 # INTEGRAÇÕES
 # =====================================================
 
-
-class IntegrationException(
-    TrendZoneException,
-):
-
+class IntegrationException(TrendZoneException):
     default_message = "Erro de integração."
 
 
-class ShopeeException(
-    IntegrationException,
-):
-
+class ShopeeException(IntegrationException):
     default_message = "Erro na integração Shopee."
 
 
-class MarketplaceUnavailable(
-    IntegrationException,
-):
-
+class MarketplaceUnavailable(IntegrationException):
     default_message = "Marketplace indisponível."

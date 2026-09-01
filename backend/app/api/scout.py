@@ -1,23 +1,57 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+"""
+TrendZone AI OS
+================================
 
-from app.database.session import get_db
-from app.security.dependencies import get_current_user
+Scout API
 
-from app.services.scout_service import ScoutService
+Responsável por iniciar o Pipeline
+completo de inteligência.
+"""
+
+from fastapi import APIRouter
+
+from app.api.response import ResponseBuilder
+
+from app.tasks.runner import Runner
 
 router = APIRouter(
+
     prefix="/scout",
+
     tags=["Scout"],
+
 )
 
 
-@router.get("/search")
-def search_products(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
+@router.post("/run")
+def execute_pipeline():
 
-    service = ScoutService(db)
+    runner = Runner()
 
-    return service.search_products()
+    result = runner.execute()
+
+    return ResponseBuilder.success(
+
+        data=result,
+
+        message="Pipeline executado.",
+
+    )
+
+
+@router.get("/status")
+def status():
+
+    return ResponseBuilder.success(
+
+        data={
+
+            "pipeline": "READY",
+
+            "agents": 5,
+
+            "tasks": 11,
+
+        }
+
+    )

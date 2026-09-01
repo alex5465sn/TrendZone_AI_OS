@@ -1,21 +1,37 @@
 """
 TrendZone AI OS
+================================
 
-Camada de Models.
+Database Package
 
-Todos os Models oficiais do sistema
-devem ser exportados por este módulo.
+Centraliza a exportação dos componentes
+da camada de banco de dados.
 
-Nunca importe Models diretamente
-de outros arquivos.
+Sempre importe através deste módulo.
+
+Exemplo:
+
+from app.database import get_db
+from app.database import SessionLocal
+from app.database import engine
 """
 
-from app.models.product import Product
-from app.models.system_info import SystemInfo
-from app.models.user import User
+from app.database.session import (
+    SessionLocal,
+    engine,
+    get_db,
+)
 
-__all__ = [
-    "Product",
-    "SystemInfo",
-    "User",
-]
+from app.database.base import Base
+
+__all__ = (
+
+    "Base",
+
+    "SessionLocal",
+
+    "engine",
+
+    "get_db",
+
+)

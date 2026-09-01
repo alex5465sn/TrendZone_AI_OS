@@ -1,14 +1,22 @@
-import api from "../api/axios";
+import { getData } from "./apiResponse";
 
-export interface DashboardData {
-    products: number;
-    score: number;
-    commission: number;
-    ai_products: number;
+export interface DashboardStats {
+    total_products: number;
+    version: string;
+    status: string;
+    pipeline: string;
 }
 
-export async function getDashboard() {
-    const response = await api.get<DashboardData>("/dashboard");
+export interface MarketplaceSummary {
+    products: number;
+    shops: number;
+    offers: number;
+}
 
-    return response.data;
+export async function getDashboard(): Promise<DashboardStats> {
+    return getData<DashboardStats>("/dashboard");
+}
+
+export async function getHealth(): Promise<Record<string, string>> {
+    return getData<Record<string, string>>("/health");
 }

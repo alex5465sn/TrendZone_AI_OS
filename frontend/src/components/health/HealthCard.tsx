@@ -17,21 +17,21 @@ export default function HealthCard({
 
     function getColor() {
 
-        switch (status) {
+        const s = status.toLowerCase();
 
-            case "online":
-                return "#22C55E";
-
-            case "development":
-                return "#F59E0B";
-
-            case "disconnected":
-                return "#94A3B8";
-
-            default:
-                return "#EF4444";
-
+        if (s.includes("online") || s.includes("ready") || s.includes("ok")) {
+            return "#22C55E";
         }
+
+        if (s.includes("development") || s.includes("warning") || s.includes("starting")) {
+            return "#F59E0B";
+        }
+
+        if (s.includes("disconnected") || s.includes("offline") || s.includes("error")) {
+            return "#EF4444";
+        }
+
+        return "#94A3B8";
 
     }
 
@@ -43,6 +43,7 @@ export default function HealthCard({
                 borderRadius: 3,
                 color: "white",
                 border: "1px solid #1E293B",
+                height: "100%",
             }}
         >
 
@@ -68,11 +69,13 @@ export default function HealthCard({
                             borderRadius: "50%",
                             bgcolor: getColor(),
                             mr: 1.5,
+                            boxShadow: `0 0 8px ${getColor()}`,
                         }}
                     />
 
                     <Typography
                         fontWeight="bold"
+                        textTransform="capitalize"
                     >
                         {status}
                     </Typography>

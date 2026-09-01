@@ -20,6 +20,16 @@ from app.api.scout import router as scout_router
 from app.api.system_info import router as system_router
 from app.api.dashboard import router as dashboard_router
 from app.api.health import router as health_router
+from app.api.pipeline import router as pipeline_router
+from app.api.marketplace import router as marketplace_router
+
+# ============================
+# NOVA API SHOPEE
+# ============================
+
+from app.routes import (
+    shopee_router,
+)
 
 
 # =====================================================
@@ -30,21 +40,11 @@ from app.api.health import router as health_router
 async def lifespan(app: FastAPI):
 
     print("\n========================================")
-    print(f"{settings.APP_NAME}")
+    print(settings.APP_NAME)
     print("Inicializando Backend...")
     print("========================================\n")
 
     Base.metadata.create_all(bind=engine)
-
-    # Futuramente:
-    #
-    # Scheduler
-    # IA Orchestrator
-    # Cache
-    # RabbitMQ
-    # Redis
-    # Monitor
-    #
 
     yield
 
@@ -127,6 +127,18 @@ app.include_router(system_router)
 app.include_router(dashboard_router)
 
 app.include_router(health_router)
+
+app.include_router(pipeline_router)
+
+app.include_router(marketplace_router)
+
+# ============================
+# Shopee Affiliate API
+# ============================
+
+app.include_router(
+    shopee_router,
+)
 
 
 # =====================================================

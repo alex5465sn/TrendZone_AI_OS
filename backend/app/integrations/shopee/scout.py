@@ -1,56 +1,134 @@
-from app.integrations.shopee.client import ShopeeClient
-from app.integrations.shopee.graphql import ShopeeGraphQL
+"""
+TrendZone AI OS
+====================================
+
+Shopee Scout
+
+Camada responsável por buscar
+dados na API Oficial da Shopee.
+
+Não contém regras de negócio.
+
+Não calcula score.
+
+Não gera relatórios.
+
+Não toma decisões.
+"""
+
+from app.integrations.shopee.affiliate_api import ShopeeAffiliateAPI
 
 
 class ShopeeScout:
 
-    def __init__(self, token: str | None = None):
+    def __init__(self):
 
-        self.client = ShopeeClient(token)
-        self.graphql = ShopeeGraphQL(token)
+        self.api = ShopeeAffiliateAPI()
 
-    def status(self):
+    # =====================================================
+    # PRODUCTS
+    # =====================================================
 
-        return {
-            "status": "online",
-            "client": self.client.__class__.__name__,
-            "graphql": self.graphql.__class__.__name__,
-        }
+    def get_products(
 
-    def get_products(self):
+        self,
 
-        """
-        Futuramente este método fará a consulta real
-        na API GraphQL da Shopee.
+        keyword: str | None = None,
 
-        Neste momento retornamos dados simulados
-        exatamente no formato da API da Shopee.
-        """
+        page: int = 1,
 
-        return [
+        limit: int = 20,
 
-            {
-                "itemId": 1001,
-                "shopId": 500,
-                "productName": "Mouse Gamer RGB",
-                "price": 129.90,
-                "commissionRate": 14.5,
-                "ratingStar": 4.9,
-                "sales": 8200,
-                "imageUrl": "https://teste.com/mouse.jpg",
-                "offerLink": "https://shopee.com/produto1",
-            },
+    ):
 
-            {
-                "itemId": 1002,
-                "shopId": 501,
-                "productName": "Teclado Mecânico",
-                "price": 249.90,
-                "commissionRate": 9.5,
-                "ratingStar": 4.6,
-                "sales": 3200,
-                "imageUrl": "https://teste.com/teclado.jpg",
-                "offerLink": "https://shopee.com/produto2",
-            },
+        response = self.api.get_products(
 
-        ]
+            keyword=keyword,
+
+            page=page,
+
+            limit=limit,
+
+        )
+
+        return (
+
+            response
+
+            .get("productOfferV2", {})
+
+            .get("nodes", [])
+
+        )
+
+    # =====================================================
+    # SHOPS
+    # =====================================================
+
+    def get_shops(
+
+        self,
+
+        keyword: str | None = None,
+
+        page: int = 1,
+
+        limit: int = 20,
+
+    ):
+
+        response = self.api.get_shops(
+
+            keyword=keyword,
+
+            page=page,
+
+            limit=limit,
+
+        )
+
+        return (
+
+            response
+
+            .get("shopOfferV2", {})
+
+            .get("nodes", [])
+
+        )
+
+    # =====================================================
+    # CAMPAIGNS
+    # =====================================================
+
+    def get_campaigns(
+
+        self,
+
+        keyword: str | None = None,
+
+        page: int = 1,
+
+        limit: int = 20,
+
+    ):
+
+        response = self.api.get_campaigns(
+
+            keyword=keyword,
+
+            page=page,
+
+            limit=limit,
+
+        )
+
+        return (
+
+            response
+
+            .get("shopeeOfferV2", {})
+
+            .get("nodes", [])
+
+        )

@@ -1,0 +1,13 @@
+"""
+Constantes oficiais da Shopee Affiliate API.
+"""
+
+RATE_LIMIT_PER_HOUR = 8000
+
+DEFAULT_TIMEOUT = 30
+
+MAX_PAGE_SIZE = 500
+
+SCROLL_ID_TTL_SECONDS = 30
+
+CONVERSION_REPORT_MONTHS = 3
