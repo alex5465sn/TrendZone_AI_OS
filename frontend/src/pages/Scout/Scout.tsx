@@ -17,8 +17,10 @@ import {
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import AddIcon from "@mui/icons-material/Add";
 
 import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
+import { createProduct } from "../../services/productService";
 
 function calculateScore(product: ShopeeProductNode): number {
 
@@ -50,6 +52,7 @@ export default function Scout() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [searched, setSearched] = useState(false);
+    const [addingProduct, setAddingProduct] = useState<number | null>(null);
 
     async function handleSearch() {
 
@@ -86,6 +89,37 @@ export default function Scout() {
         } finally {
 
             setLoading(false);
+
+        }
+
+    }
+
+    async function handleAddProduct(product: ShopeeProductNode) {
+
+        try {
+
+            setAddingProduct(product.itemId);
+
+            await createProduct({
+                item_id: product.itemId,
+                shop_id: product.shopId,
+                name: product.productName,
+                price: Number(product.price),
+                commission: Number(product.commissionRate) * 100,
+                image: product.imageUrl,
+                offer_link: product.offerLink,
+            });
+
+            alert(`✓ Produto "${product.productName}" adicionado ao tracker!`);
+
+        } catch (err) {
+
+            console.error(err);
+            alert("✗ Erro ao adicionar produto ao tracker.");
+
+        } finally {
+
+            setAddingProduct(null);
 
         }
 
@@ -281,6 +315,7 @@ export default function Scout() {
                                             display: "flex",
                                             justifyContent: "space-between",
                                             alignItems: "center",
+                                            gap: 1,
                                         }}
                                     >
 
@@ -292,18 +327,39 @@ export default function Scout() {
                                             R$ {product.price}
                                         </Typography>
 
-                                        <Button
-                                            href={product.offerLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            size="small"
-                                            sx={{
-                                                color: "#38BDF8",
-                                                textTransform: "none",
-                                            }}
-                                        >
-                                            Ver oferta
-                                        </Button>
+                                        <Box sx={{ display: "flex", gap: 1 }}>
+
+                                            <Button
+                                                href={product.offerLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                size="small"
+                                                sx={{
+                                                    color: "#38BDF8",
+                                                    textTransform: "none",
+                                                }}
+                                            >
+                                                Ver
+                                            </Button>
+
+                                            <Button
+                                                startIcon={<AddIcon />}
+                                                onClick={() => handleAddProduct(product)}
+                                                disabled={addingProduct === product.itemId}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: "#10B98133",
+                                                    color: "#10B981",
+                                                    textTransform: "none",
+                                                    "&:hover": {
+                                                        backgroundColor: "#10B98155",
+                                                    },
+                                                }}
+                                            >
+                                                {addingProduct === product.itemId ? "..." : "Adicionar"}
+                                            </Button>
+
+                                        </Box>
 
                                     </Box>
 

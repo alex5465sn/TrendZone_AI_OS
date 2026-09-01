@@ -1,28 +1,41 @@
 # TrendZone AI OS
 
-Sistema inteligente para automação de vendas em marketplaces.
+## Enterprise Marketplace Intelligence SaaS
 
-## Objetivos
+TrendZone AI OS é uma plataforma SaaS voltada para inteligência de marketplaces, automação, análise de produtos, ranking, IA e integrações.
 
-- Integração com Shopee
-- Integração com Mercado Livre
-- IA para SEO
-- IA para geração de conteúdo
-- Dashboard
-- Analytics
-- Automações
-- SaaS
+---
 
-## Tecnologias
+## Arquitetura
 
-- Python
 - FastAPI
 - SQLAlchemy
-- SQLite
-- Alembic
+- JWT
+- SQLite (desenvolvimento)
+- React (em desenvolvimento)
 - Docker
-- Streamlit (futuro)
+- GitHub
+- Arquitetura baseada em Agents
 
-Versão atual:
+---
 
-0.1.0
+## Roadmap
+
+- ✅ Core
+- ✅ Database
+- ✅ Security
+- ✅ Models
+- ✅ Schemas
+- ✅ Repositories
+- ✅ Services
+- ✅ Agents
+
+Próxima etapa:
+
+- ⏳ Tasks
+
+---
+
+## Licença
+
+Projeto privado.

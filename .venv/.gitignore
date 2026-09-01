@@ -1,22 +1,65 @@
-# Ambiente Virtual
-.venv/
-
+# ============================
 # Python
+# ============================
+
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.so
 
-# Banco
-*.db
+# Virtual Environment
+.venv/
+venv/
+env/
 
-# Variáveis
-.env
-
-# VSCode
+# VS Code
 .vscode/
+
+# JetBrains
+.idea/
+
+# SQLite
+*.db
+*.sqlite3
 
 # Logs
 *.log
 
-# Sistema
-.DS_Store
+# Environment
+.env
+.env.*
+
+# Pytest
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+
+# React
+frontend/dist/
+
+# Docker
+docker-data/
+
+# Windows
 Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
