@@ -2,12 +2,9 @@
 TrendZone AI OS
 ================================
 
-Repository responsável pela entidade User.
+User Repository
 
-Toda regra de autenticação, permissões,
-JWT e validações pertencem aos Services.
-
-Este Repository apenas acessa o banco.
+Responsável pelo acesso aos dados de usuários.
 """
 
 from sqlalchemy import select
@@ -18,14 +15,12 @@ from app.repositories.base_repository import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):
-    """
-    Repository da entidade User.
-    """
+    """Repository da entidade User."""
 
     model = User
 
     # =====================================================
-    # EMAIL
+    # GET BY EMAIL
     # =====================================================
 
     @classmethod
@@ -46,17 +41,34 @@ class UserRepository(BaseRepository[User]):
         return db.execute(stmt).scalar_one_or_none()
 
     # =====================================================
-    # LOGIN
+    # GET BY ROLE
     # =====================================================
 
     @classmethod
-    def exists_email(
+    def get_by_role(
         cls,
         db: Session,
-        email: str,
-    ) -> bool:
+        role: str,
+    ) -> list[User]:
 
-        return cls.exists(
-            db,
-            email=email,
+        stmt = (
+            select(User)
+            .where(
+                User.role == role,
+                User.is_active.is_(True),
+            )
         )
+
+        return list(db.execute(stmt).scalars().all())
+
+    # =====================================================
+    # GET ADMINS
+    # =====================================================
+
+    @classmethod
+    def get_admins(
+        cls,
+        db: Session,
+    ) -> list[User]:
+
+        return cls.get_by_role(db, "ADMIN")
