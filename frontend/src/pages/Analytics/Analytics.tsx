@@ -8,33 +8,52 @@ import {
     CardContent,
     CircularProgress,
     Alert,
-    Chip,
-    Avatar,
 } from "@mui/material";
 
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import StarIcon from "@mui/icons-material/Star";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 
-import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
+import {
+    BarChart,
+    Bar,
+    LineChart,
+    Line,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from "recharts";
 
-function calculateScore(product: ShopeeProductNode): number {
+import {
+    getProductsSummary,
+    getProductsByScore,
+    getProductsByCommission,
+    getTopProducts,
+    getCommissionSummary,
+    getSalesByRating,
+    type ProductSummary,
+    type ScoreDistribution,
+    type CommissionDistribution,
+    type TopProduct,
+    type CommissionSummary,
+} from "../../services/analyticsService";
 
-    const rating = Number(product.ratingStar) || 0;
-    const sales = product.sales || 0;
-    const commission = Number(product.commissionRate) || 0;
-
-    const salesScore = Math.min(sales / 100, 30);
-    const ratingScore = (rating / 5) * 30;
-    const commissionScore = commission * 100 * 2;
-
-    return Math.min(Math.round(salesScore + ratingScore + commissionScore), 100);
-
-}
+const COLORS = ["#2563EB", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"];
 
 export default function Analytics() {
 
-    const [products, setProducts] = useState<ShopeeProductNode[]>([]);
+    const [productsSummary, setProductsSummary] = useState<ProductSummary | null>(null);
+    const [scoreDistribution, setScoreDistribution] = useState<ScoreDistribution | null>(null);
+    const [commissionDistribution, setCommissionDistribution] = useState<CommissionDistribution | null>(null);
+    const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+    const [commissionSummary, setCommissionSummary] = useState<CommissionSummary | null>(null);
+    const [salesByRating, setSalesByRating] = useState<Record<string, number> | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -44,22 +63,30 @@ export default function Analytics() {
 
             try {
 
-                const data = await searchShopeeProducts({
-                    keyword: "tendencia",
-                    page: 1,
-                    limit: 50,
-                    sortType: 2,
-                });
+                setLoading(true);
 
-                const scored = (data.nodes || [])
-                    .map((product) => ({
-                        ...product,
-                        _score: calculateScore(product),
-                    }))
-                    .sort((a, b) => b._score - a._score)
-                    .slice(0, 20);
+                const [
+                    products,
+                    scores,
+                    commissions,
+                    top,
+                    commission,
+                    salesRating,
+                ] = await Promise.all([
+                    getProductsSummary(),
+                    getProductsByScore(),
+                    getProductsByCommission(),
+                    getTopProducts(),
+                    getCommissionSummary(),
+                    getSalesByRating(),
+                ]);
 
-                setProducts(scored as ShopeeProductNode[]);
+                setProductsSummary(products);
+                setScoreDistribution(scores);
+                setCommissionDistribution(commissions);
+                setTopProducts(top);
+                setCommissionSummary(commission);
+                setSalesByRating(salesRating);
 
             } catch (err) {
 
@@ -98,15 +125,35 @@ export default function Analytics() {
 
     }
 
-    const avgCommission = products.length
-        ? (products.reduce((sum, p) => sum + Number(p.commissionRate), 0) / products.length * 100).toFixed(1)
-        : "0";
+    const scoreData = scoreDistribution ? [
+        { name: "80-100", value: scoreDistribution["80-100"] },
+        { name: "60-79", value: scoreDistribution["60-79"] },
+        { name: "40-59", value: scoreDistribution["40-59"] },
+        { name: "0-39", value: scoreDistribution["0-39"] },
+    ] : [];
 
-    const avgRating = products.length
-        ? (products.reduce((sum, p) => sum + Number(p.ratingStar), 0) / products.length).toFixed(1)
-        : "0";
+    const commissionData = commissionDistribution ? [
+        { name: "0-5%", value: commissionDistribution["0-5%"] },
+        { name: "5-10%", value: commissionDistribution["5-10%"] },
+        { name: "10-15%", value: commissionDistribution["10-15%"] },
+        { name: "15-20%", value: commissionDistribution["15-20%"] },
+        { name: "20%+", value: commissionDistribution["20%+"] },
+    ] : [];
 
-    const totalSales = products.reduce((sum, p) => sum + p.sales, 0);
+    const topProductsData = topProducts.map(p => ({
+        name: p.name.substring(0, 20),
+        score: p.score,
+        commission: p.commission,
+        sales: p.sales,
+    }));
+
+    const salesRatingData = salesByRating ? [
+        { name: "4.5-5.0", sales: salesByRating["4.5-5.0"] || 0 },
+        { name: "4.0-4.4", sales: salesByRating["4.0-4.4"] || 0 },
+        { name: "3.5-3.9", sales: salesByRating["3.5-3.9"] || 0 },
+        { name: "3.0-3.4", sales: salesByRating["3.0-3.4"] || 0 },
+        { name: "0-2.9", sales: salesByRating["0-2.9"] || 0 },
+    ] : [];
 
     return (
 
@@ -116,31 +163,28 @@ export default function Analytics() {
                 variant="h4"
                 fontWeight="bold"
                 color="#F8FAFC"
-                mb={1}
-            >
-                Análises
-            </Typography>
-
-            <Typography
-                variant="body1"
-                color="#94A3B8"
                 mb={4}
             >
-                Visão geral das oportunidades encontradas na Shopee.
+                Análises & Métricas
             </Typography>
 
+            {/* Resumos */}
             <Grid container spacing={3} mb={4}>
 
                 <Grid item xs={12} md={4}>
                     <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
                         <CardContent>
-                            <Typography color="#94A3B8" mb={1}>
-                                <AttachMoneyIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-                                Comissão Média
-                            </Typography>
-                            <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
-                                {avgCommission}%
-                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: "#2563EB33", color: "#2563EB" }}>
+                                    <TrendingUpIcon />
+                                </Box>
+                                <Box>
+                                    <Typography color="#94A3B8" fontSize="0.875rem">Score Médio</Typography>
+                                    <Typography variant="h5" fontWeight="bold" color="#F8FAFC">
+                                        {productsSummary?.average_score.toFixed(1)}
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -148,13 +192,17 @@ export default function Analytics() {
                 <Grid item xs={12} md={4}>
                     <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
                         <CardContent>
-                            <Typography color="#94A3B8" mb={1}>
-                                <StarIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-                                Avaliação Média
-                            </Typography>
-                            <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
-                                {avgRating} ★
-                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: "#10B98133", color: "#10B981" }}>
+                                    <AttachMoneyIcon />
+                                </Box>
+                                <Box>
+                                    <Typography color="#94A3B8" fontSize="0.875rem">Comissão Total</Typography>
+                                    <Typography variant="h5" fontWeight="bold" color="#F8FAFC">
+                                        R$ {commissionSummary?.total_commission.toFixed(2)}
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </CardContent>
                     </Card>
                 </Grid>
@@ -162,70 +210,118 @@ export default function Analytics() {
                 <Grid item xs={12} md={4}>
                     <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
                         <CardContent>
-                            <Typography color="#94A3B8" mb={1}>
-                                <TrendingUpIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-                                Total de Vendas
-                            </Typography>
-                            <Typography variant="h4" fontWeight="bold" color="#F8FAFC">
-                                {totalSales.toLocaleString("pt-BR")}
-                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: "#F59E0B33", color: "#F59E0B" }}>
+                                    <StarIcon />
+                                </Box>
+                                <Box>
+                                    <Typography color="#94A3B8" fontSize="0.875rem">Avaliação Média</Typography>
+                                    <Typography variant="h5" fontWeight="bold" color="#F8FAFC">
+                                        {productsSummary?.average_rating.toFixed(1)} ★
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </CardContent>
                     </Card>
                 </Grid>
 
             </Grid>
 
+            {/* Gráficos */}
             <Grid container spacing={3}>
 
-                {products.slice(0, 6).map((product: ShopeeProductNode & { _score?: number }) => {
+                {/* Score Distribution */}
+                <Grid item xs={12} md={6}>
+                    <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
+                        <CardContent>
+                            <Typography variant="h6" fontWeight="bold" color="#F8FAFC" mb={3}>
+                                Distribuição de Scores
+                            </Typography>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={scoreData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, value }) => `${name}: ${value}`}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
+                                        {scoreData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-                    const score = product._score || calculateScore(product);
-                    let color: "success" | "warning" | "info" | "error" = "error";
+                {/* Commission Distribution */}
+                <Grid item xs={12} md={6}>
+                    <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
+                        <CardContent>
+                            <Typography variant="h6" fontWeight="bold" color="#F8FAFC" mb={3}>
+                                Distribuição de Comissões
+                            </Typography>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={commissionData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                                    <XAxis dataKey="name" stroke="#94A3B8" />
+                                    <YAxis stroke="#94A3B8" />
+                                    <Tooltip contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #2563EB" }} />
+                                    <Bar dataKey="value" fill="#2563EB" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-                    if (score >= 80) { color = "success"; }
-                    else if (score >= 60) { color = "warning"; }
-                    else if (score >= 40) { color = "info"; }
+                {/* Top Products */}
+                <Grid item xs={12} md={6}>
+                    <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
+                        <CardContent>
+                            <Typography variant="h6" fontWeight="bold" color="#F8FAFC" mb={3}>
+                                Top 10 Produtos por Score
+                            </Typography>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={topProductsData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                                    <XAxis dataKey="name" stroke="#94A3B8" angle={-45} textAnchor="end" height={80} />
+                                    <YAxis stroke="#94A3B8" />
+                                    <Tooltip contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #2563EB" }} />
+                                    <Legend />
+                                    <Bar dataKey="score" fill="#2563EB" />
+                                    <Bar dataKey="commission" fill="#10B981" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-                    return (
-
-                        <Grid item xs={12} md={6} key={product.itemId}>
-
-                            <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
-
-                                <CardContent>
-
-                                    <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-
-                                        <Avatar
-                                            src={product.imageUrl}
-                                            alt={product.productName}
-                                            variant="rounded"
-                                            sx={{ width: 64, height: 64 }}
-                                        />
-
-                                        <Box flex={1}>
-                                            <Typography color="#F8FAFC" fontWeight="bold" sx={{ mb: 0.5 }}>
-                                                {product.productName}
-                                            </Typography>
-                                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                                <Chip label={`Score ${score}`} size="small" color={color} />
-                                                <Chip label={`R$ ${product.price}`} size="small" sx={{ backgroundColor: "#1E293B", color: "#F8FAFC" }} />
-                                                <Chip label={`${(Number(product.commissionRate) * 100).toFixed(1)}%`} size="small" sx={{ backgroundColor: "#10B98133", color: "#10B981" }} />
-                                                <Chip label={`${product.sales} vendas`} size="small" sx={{ backgroundColor: "#1E293B", color: "#94A3B8" }} />
-                                            </Box>
-                                        </Box>
-
-                                    </Box>
-
-                                </CardContent>
-
-                            </Card>
-
-                        </Grid>
-
-                    );
-
-                })}
+                {/* Sales by Rating */}
+                <Grid item xs={12} md={6}>
+                    <Card sx={{ backgroundColor: "#111827", borderRadius: 3, border: "1px solid #1E293B" }}>
+                        <CardContent>
+                            <Typography variant="h6" fontWeight="bold" color="#F8FAFC" mb={3}>
+                                Vendas por Avaliação
+                            </Typography>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart data={salesRatingData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                                    <XAxis dataKey="name" stroke="#94A3B8" />
+                                    <YAxis stroke="#94A3B8" />
+                                    <Tooltip contentStyle={{ backgroundColor: "#1E293B", border: "1px solid #2563EB" }} />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="sales" stroke="#F59E0B" strokeWidth={2} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
             </Grid>
 
