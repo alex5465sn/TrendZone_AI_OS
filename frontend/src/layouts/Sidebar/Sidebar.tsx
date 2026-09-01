@@ -15,10 +15,12 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 import { NavLink } from "react-router-dom";
+import { isAdmin } from "../../services/authService";
 
-const menu = [
+const baseMenu = [
 
     {
         text: "Painel",
@@ -49,8 +51,17 @@ const menu = [
         icon: <SettingsIcon />,
         path: "/settings",
     },
-
 ];
+
+const adminMenu = [
+    {
+        text: "Admin",
+        icon: <AdminPanelSettingsIcon />,
+        path: "/admin",
+    },
+];
+
+const menu = isAdmin() ? [...baseMenu, ...adminMenu] : baseMenu;
 
 export default function Sidebar() {
 

@@ -12,12 +12,23 @@ import Products from "../pages/Products/Products";
 import Scout from "../pages/Scout/Scout";
 import Analytics from "../pages/Analytics/Analytics";
 import Settings from "../pages/Settings/Settings";
+import Admin from "../pages/Admin/Admin";
 
-import { isAuthenticated } from "../services/authService";
+import { isAuthenticated, isAdmin } from "../services/authService";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     if (!isAuthenticated()) {
         return <Navigate to="/login" replace />;
+    }
+    return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+    if (!isAuthenticated()) {
+        return <Navigate to="/login" replace />;
+    }
+    if (!isAdmin()) {
+        return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
 }
@@ -71,6 +82,17 @@ export default function AppRoutes() {
                             </Routes>
                         </DashboardLayout>
                     </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/admin"
+                element={
+                    <AdminRoute>
+                        <DashboardLayout>
+                            <Admin />
+                        </DashboardLayout>
+                    </AdminRoute>
                 }
             />
 
