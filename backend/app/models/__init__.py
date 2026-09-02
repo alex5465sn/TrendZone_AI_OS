@@ -24,10 +24,14 @@ from app.models.product import Product
 from app.models.system_info import SystemInfo
 from app.models.user import User
 from app.models.campaign import Campaign
+from app.models.prospect import Prospect
+from app.models.schedule import Schedule
 
 __all__ = (
     "Product",
     "SystemInfo",
     "User",
     "Campaign",
+    "Prospect",
+    "Schedule",
 )
