@@ -15,6 +15,7 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import CampaignIcon from "@mui/icons-material/Campaign";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 import { NavLink } from "react-router-dom";
@@ -44,6 +45,12 @@ const baseMenu = [
         text: "Análises",
         icon: <AnalyticsIcon />,
         path: "/analytics",
+    },
+
+    {
+        text: "Oportunidades",
+        icon: <CampaignIcon />,
+        path: "/opportunities",
     },
 
     {

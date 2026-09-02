@@ -24,6 +24,7 @@ from app.api.pipeline import router as pipeline_router
 from app.api.marketplace import router as marketplace_router
 from app.api.admin import router as admin_router
 from app.api.analytics import router as analytics_router
+from app.api.opportunities import router as opportunities_router
 
 # ============================
 # NOVA API SHOPEE
@@ -137,6 +138,8 @@ app.include_router(marketplace_router)
 app.include_router(admin_router)
 
 app.include_router(analytics_router)
+
+app.include_router(opportunities_router)
 
 # ============================
 # Shopee Affiliate API

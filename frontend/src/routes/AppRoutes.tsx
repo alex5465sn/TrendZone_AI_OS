@@ -11,6 +11,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import Products from "../pages/Products/Products";
 import Scout from "../pages/Scout/Scout";
 import Analytics from "../pages/Analytics/Analytics";
+import Opportunities from "../pages/Opportunities/Opportunities";
 import Settings from "../pages/Settings/Settings";
 import Admin from "../pages/Admin/Admin";
 
@@ -72,6 +73,11 @@ export default function AppRoutes() {
                                 <Route
                                     path="/analytics"
                                     element={<Analytics />}
+                                />
+
+                                <Route
+                                    path="/opportunities"
+                                    element={<Opportunities />}
                                 />
 
                                 <Route
