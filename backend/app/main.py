@@ -27,6 +27,7 @@ from app.api.analytics import router as analytics_router
 from app.api.opportunities import router as opportunities_router
 from app.api.prospects import router as prospects_router
 from app.api.sales import router as sales_router
+from app.api.inspector import router as inspector_router
 
 # ============================
 # NOVA API SHOPEE
@@ -146,6 +147,8 @@ app.include_router(opportunities_router)
 app.include_router(prospects_router)
 
 app.include_router(sales_router)
+
+app.include_router(inspector_router)
 
 # ============================
 # Shopee Affiliate API
