@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAccessToken, refreshAccessToken, logout } from "../services/authService";
 
 const api = axios.create({
-    baseURL: "http://127.0.0.1:8000",
+    baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000",
     timeout: 30000,
 });
 

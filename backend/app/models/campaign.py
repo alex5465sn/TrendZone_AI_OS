@@ -35,6 +35,12 @@ class Campaign(BaseModel):
 
     __tablename__ = "campaigns"
 
+    marketplace: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="shopee",
+    )
+
     product_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("products.id"),

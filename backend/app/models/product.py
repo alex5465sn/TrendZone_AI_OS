@@ -24,6 +24,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    UniqueConstraint,
 )
 
 from sqlalchemy.orm import (
@@ -45,6 +46,8 @@ class Product(BaseModel):
 
         Index("idx_product_uuid", "uuid"),
 
+        Index("idx_product_marketplace", "marketplace"),
+
         Index("idx_product_item", "item_id"),
 
         Index("idx_product_shop", "shop_id"),
@@ -57,16 +60,27 @@ class Product(BaseModel):
 
         Index("idx_product_created", "created_at"),
 
+        UniqueConstraint(
+            "marketplace",
+            "item_id",
+            name="uq_product_marketplace_item",
+        ),
+
     )
 
     # =====================================================
     # Marketplace
     # =====================================================
 
+    marketplace: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="shopee",
+    )
+
     item_id: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
-        unique=True,
     )
 
     shop_id: Mapped[int] = mapped_column(

@@ -11,6 +11,7 @@ from app.database.base import BaseModel
 class Prospect(BaseModel):
     __tablename__ = "prospects"
 
+    marketplace: Mapped[str] = mapped_column(String(30), nullable=False, default="shopee")
     nicho: Mapped[str] = mapped_column(String(200), nullable=False)
     cidade: Mapped[str] = mapped_column(String(200), default="")
     busca: Mapped[str] = mapped_column(String(500), default="")

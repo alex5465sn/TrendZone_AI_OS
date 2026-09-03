@@ -26,6 +26,7 @@ service = MarketplaceBusiness()
 @router.get("/products")
 def products(
 
+    marketplace: str = Query(default="shopee"),
     keyword: str = Query(default=""),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
@@ -35,7 +36,7 @@ def products(
 
     data = service.search_products(
 
-        marketplace_name="shopee",
+        marketplace_name=marketplace,
 
         keyword=keyword,
 
@@ -55,6 +56,7 @@ def products(
 @router.get("/shops")
 def shops(
 
+    marketplace: str = Query(default="shopee"),
     keyword: str = Query(default=""),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
@@ -64,7 +66,7 @@ def shops(
 
     data = service.search_shops(
 
-        marketplace_name="shopee",
+        marketplace_name=marketplace,
 
         keyword=keyword,
 
@@ -84,6 +86,7 @@ def shops(
 @router.get("/offers")
 def offers(
 
+    marketplace: str = Query(default="shopee"),
     keyword: str = Query(default=""),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
@@ -93,7 +96,7 @@ def offers(
 
     data = service.search_offers(
 
-        marketplace_name="shopee",
+        marketplace_name=marketplace,
 
         keyword=keyword,
 

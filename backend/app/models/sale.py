@@ -2,6 +2,7 @@ from sqlalchemy import (
     Float,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database.base import BaseModel
@@ -10,8 +11,19 @@ from app.database.base import BaseModel
 class Sale(BaseModel):
     __tablename__ = "sales"
 
+    __table_args__ = (
+        UniqueConstraint(
+            "marketplace",
+            "conversion_id",
+            name="uq_sale_marketplace_conversion",
+        ),
+    )
+
+    marketplace: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="shopee",
+    )
     conversion_id: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False,
+        String(100), nullable=False,
     )
     order_id: Mapped[str] = mapped_column(String(100), default="")
     order_status: Mapped[str] = mapped_column(String(50), default="")

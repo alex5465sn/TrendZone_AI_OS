@@ -12,6 +12,7 @@ from app.core.exceptions import (
 
 from app.database.base import Base
 from app.database.session import engine
+from app.database.migrations import run as run_migrations
 
 from app.api.auth import router as auth_router
 from app.api.user import router as user_router
@@ -51,6 +52,8 @@ async def lifespan(app: FastAPI):
     print(settings.APP_NAME)
     print("Inicializando Backend...")
     print("========================================\n")
+
+    run_migrations(engine)
 
     Base.metadata.create_all(bind=engine)
 
@@ -95,17 +98,7 @@ app.add_exception_handler(
 # CORS
 # =====================================================
 
-origins = [
-
-    "http://localhost:5173",
-
-    "http://127.0.0.1:5173",
-
-    "http://localhost:5174",
-
-    "http://127.0.0.1:5174",
-
-]
+origins = settings.cors_origin_list
 
 app.add_middleware(
 

@@ -9,6 +9,7 @@ from app.database.base import BaseModel
 class Schedule(BaseModel):
     __tablename__ = "schedules"
 
+    marketplace: Mapped[str] = mapped_column(String(30), nullable=False, default="shopee")
     nicho: Mapped[str] = mapped_column(String(200), nullable=False)
     cidade: Mapped[str] = mapped_column(String(200), default="")
     hora: Mapped[str] = mapped_column(String(5), default="09:00")
