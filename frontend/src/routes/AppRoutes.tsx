@@ -16,6 +16,7 @@ import Prospects from "../pages/Prospects/Prospects";
 import Sales from "../pages/Sales/Sales";
 import Inspector from "../pages/Inspector/Inspector";
 import Settings from "../pages/Settings/Settings";
+import Accounts from "../pages/Accounts/Accounts";
 import Admin from "../pages/Admin/Admin";
 
 import { isAuthenticated, isAdmin } from "../services/authService";
@@ -101,6 +102,11 @@ export default function AppRoutes() {
                                 <Route
                                     path="/settings"
                                     element={<Settings />}
+                                />
+
+                                <Route
+                                    path="/accounts"
+                                    element={<Accounts />}
                                 />
 
                             </Routes>
