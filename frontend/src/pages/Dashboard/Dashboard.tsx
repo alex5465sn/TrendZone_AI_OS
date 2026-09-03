@@ -41,6 +41,8 @@ export default function Dashboard() {
     const [health, setHealth] = useState<Record<string, string> | null>(null);
     const [products, setProducts] = useState<ShopeeProductNode[]>([]);
     const [loading, setLoading] = useState(true);
+    const [productsLoading, setProductsLoading] = useState(false);
+    const [productsError, setProductsError] = useState("");
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -51,16 +53,15 @@ export default function Dashboard() {
 
                 setLoading(true);
 
-                const [dashboardData, healthData, productsData] = await Promise.all([
+                const [dashboardData, healthData] = await Promise.all([
                     getDashboard(),
                     getHealth(),
-                    searchShopeeProducts({ keyword: "tendencia", limit: 5 }),
                 ]);
 
                 setDashboard(dashboardData);
                 setHealth(healthData);
-                setProducts(productsData.nodes || []);
-
+                setProducts([]);
+                setProductsError("");
                 setError("");
 
             } catch (err) {
@@ -79,6 +80,20 @@ export default function Dashboard() {
         loadData();
 
     }, []);
+
+    async function loadTrendProducts() {
+        setProductsLoading(true);
+        setProductsError("");
+        try {
+            const productsData = await searchShopeeProducts({ keyword: "tendencia", limit: 5 });
+            setProducts(productsData.nodes || []);
+        } catch (err) {
+            console.error(err);
+            setProductsError("Não foi possível carregar produtos da Shopee. Verifique as credenciais em Contas de Afiliado.");
+        } finally {
+            setProductsLoading(false);
+        }
+    }
 
     if (loading) {
 
@@ -165,10 +180,10 @@ export default function Dashboard() {
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Shopee API"
-                        value={products.length > 0 ? "Conectada" : "Verificando"}
-                        subtitle={products.length > 0 ? `${products.length} produtos carregados` : "Aguardando dados"}
+                        value={products.length > 0 ? "Conectada" : productsLoading ? "Carregando" : "Pronta"}
+                        subtitle={products.length > 0 ? `${products.length} produtos carregados` : "Toque em carregar abaixo"}
                         icon={AttachMoneyIcon}
-                        color={products.length > 0 ? "#F59E0B" : "#EF4444"}
+                        color={products.length > 0 ? "#F59E0B" : "#10B981"}
                     />
                 </Grid>
 
@@ -206,19 +221,42 @@ export default function Dashboard() {
                                     Produtos em Destaque - Shopee
                                 </Typography>
 
-                                <Button
-                                    component={Link}
-                                    to="/products"
-                                    endIcon={<ArrowForwardIcon />}
-                                    sx={{
-                                        color: "#38BDF8",
-                                        textTransform: "none",
-                                    }}
-                                >
-                                    Ver todos
-                                </Button>
+                                <Box display="flex" gap={1} alignItems="center">
+                                    {products.length === 0 && !productsLoading && (
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            onClick={loadTrendProducts}
+                                            disabled={productsLoading}
+                                            sx={{
+                                                backgroundColor: "#F59E0B",
+                                                textTransform: "none",
+                                            }}
+                                        >
+                                            Carregar produtos
+                                        </Button>
+                                    )}
+                                    {productsLoading && <CircularProgress size={20} />}
+                                    <Button
+                                        component={Link}
+                                        to="/products"
+                                        endIcon={<ArrowForwardIcon />}
+                                        sx={{
+                                            color: "#38BDF8",
+                                            textTransform: "none",
+                                        }}
+                                    >
+                                        Ver todos
+                                    </Button>
+                                </Box>
 
                             </Box>
+
+                            {productsError && (
+                                <Alert severity="warning" sx={{ mb: 2 }}>
+                                    {productsError}
+                                </Alert>
+                            )}
 
                             <TableContainer>
 

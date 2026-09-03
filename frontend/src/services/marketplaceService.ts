@@ -1,4 +1,4 @@
-import { getData } from "./apiResponse";
+import api from "../api/axios";
 
 export interface ShopeeProductNode {
     itemId: number;
@@ -41,14 +41,28 @@ export interface MarketplaceFilters {
     sortType?: number;
 }
 
+const MARKETPLACE_TIMEOUT = 10000; // 10s — chamadas externas não devem travar a UI
+
 export async function searchShopeeProducts(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
-    return getData<ShopeeProductResponse>(`/marketplace/products?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`);
+    const response = await api.get(
+        `/marketplace/products?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
+        { timeout: MARKETPLACE_TIMEOUT }
+    );
+    return response.data.data as ShopeeProductResponse;
 }
 
 export async function searchShopeeShops(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
-    return getData<ShopeeProductResponse>(`/marketplace/shops?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`);
+    const response = await api.get(
+        `/marketplace/shops?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
+        { timeout: MARKETPLACE_TIMEOUT }
+    );
+    return response.data.data as ShopeeProductResponse;
 }
 
 export async function searchShopeeOffers(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
-    return getData<ShopeeProductResponse>(`/marketplace/offers?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`);
+    const response = await api.get(
+        `/marketplace/offers?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
+        { timeout: MARKETPLACE_TIMEOUT }
+    );
+    return response.data.data as ShopeeProductResponse;
 }

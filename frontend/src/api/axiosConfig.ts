@@ -32,8 +32,15 @@ api.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                logout();
-                window.location.href = "/login";
+                // Evita redirecionar se já estiver em páginas de auth
+                const publicPaths = ["/login", "/register"];
+                const isPublicPath = publicPaths.some((p) =>
+                    window.location.pathname.startsWith(p)
+                );
+                if (!isPublicPath) {
+                    logout();
+                    window.location.href = "/login";
+                }
                 return Promise.reject(refreshError);
             }
         }
