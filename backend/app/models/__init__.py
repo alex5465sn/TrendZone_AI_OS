@@ -26,6 +26,7 @@ from app.models.user import User
 from app.models.campaign import Campaign
 from app.models.prospect import Prospect
 from app.models.schedule import Schedule
+from app.models.sale import Sale
 
 __all__ = (
     "Product",
@@ -34,4 +35,5 @@ __all__ = (
     "Campaign",
     "Prospect",
     "Schedule",
+    "Sale",
 )

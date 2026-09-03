@@ -17,6 +17,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import TravelExploreIcon from "@mui/icons-material/TravelExplore";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 import { NavLink } from "react-router-dom";
@@ -58,6 +59,12 @@ const baseMenu = [
         text: "Prospecção",
         icon: <TravelExploreIcon />,
         path: "/prospects",
+    },
+
+    {
+        text: "Vendas & Comissões",
+        icon: <AttachMoneyIcon />,
+        path: "/sales",
     },
 
     {

@@ -70,3 +70,22 @@ class Campaign(BaseModel):
         String(20),
         default="DRAFT",
     )
+
+    tracking_link: Mapped[str] = mapped_column(
+        String(500),
+        default="",
+    )
+
+    clicks: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+    )
+
+    conversions: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+    )
+
+    revenue: Mapped[float] = mapped_column(
+        default=0.0,
+    )
