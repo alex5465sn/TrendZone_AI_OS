@@ -22,6 +22,9 @@ class Sale(BaseModel):
     marketplace: Mapped[str] = mapped_column(
         String(30), nullable=False, default="shopee",
     )
+    user_id: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=None,
+    )
     conversion_id: Mapped[str] = mapped_column(
         String(100), nullable=False,
     )

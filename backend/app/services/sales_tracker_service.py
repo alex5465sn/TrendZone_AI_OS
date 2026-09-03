@@ -25,9 +25,13 @@ class SalesTrackerService:
     def fetch_conversions(
         days_back: int = 7,
         limit: int = 50,
+        credentials: dict | None = None,
     ) -> list[dict[str, Any]]:
 
-        client = ShopeeClient()
+        client = ShopeeClient(
+            app_id=(credentials or {}).get("app_id"),
+            secret=(credentials or {}).get("secret"),
+        )
 
         now = int(time.time())
         start = now - (days_back * 86400)
@@ -90,8 +94,15 @@ class SalesTrackerService:
         }
 
     @staticmethod
-    def generate_tracking_link(origin_url: str, sub_ids: list[str] | None = None) -> dict:
-        client = ShopeeClient()
+    def generate_tracking_link(
+        origin_url: str,
+        sub_ids: list[str] | None = None,
+        credentials: dict | None = None,
+    ) -> dict:
+        client = ShopeeClient(
+            app_id=(credentials or {}).get("app_id"),
+            secret=(credentials or {}).get("secret"),
+        )
 
         variables: dict[str, Any] = {
             "originUrl": origin_url,

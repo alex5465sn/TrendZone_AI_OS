@@ -20,6 +20,9 @@ from pydantic import (
 class MarketplaceAccountCreate(BaseModel):
     """
     Conexão de uma conta de marketplace.
+
+    - shopee: exige extra.app_id + extra.secret (assinatura SHA256)
+    - demais marketplaces (futuros): access_token
     """
 
     marketplace: str = Field(
@@ -27,8 +30,8 @@ class MarketplaceAccountCreate(BaseModel):
         max_length=30,
     )
 
-    access_token: str = Field(
-        min_length=10,
+    access_token: str | None = Field(
+        default=None,
         max_length=2000,
     )
 

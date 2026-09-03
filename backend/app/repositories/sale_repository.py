@@ -14,16 +14,18 @@ class SaleRepository(BaseRepository[Sale]):
         return db.execute(stmt).scalar_one_or_none()
 
     @classmethod
-    def get_by_status(cls, db: Session, status: str) -> list[Sale]:
+    def get_by_status(cls, db: Session, status: str, user_id: int | None = None) -> list[Sale]:
         stmt = (
             select(Sale)
             .where(Sale.status == status, Sale.is_active.is_(True))
             .order_by(Sale.created_at.desc())
         )
+        if user_id is not None:
+            stmt = stmt.where(Sale.user_id == user_id)
         return list(db.execute(stmt).scalars().all())
 
     @classmethod
-    def financial_summary(cls, db: Session) -> dict:
+    def financial_summary(cls, db: Session, user_id: int | None = None) -> dict:
         stmt = (
             select(
                 func.count(Sale.id).label("total_sales"),
@@ -34,6 +36,8 @@ class SaleRepository(BaseRepository[Sale]):
             )
             .where(Sale.is_active.is_(True))
         )
+        if user_id is not None:
+            stmt = stmt.where(Sale.user_id == user_id)
         row = db.execute(stmt).one()
         return {
             "total_sales": row.total_sales,
@@ -44,7 +48,7 @@ class SaleRepository(BaseRepository[Sale]):
         }
 
     @classmethod
-    def pending_summary(cls, db: Session) -> dict:
+    def pending_summary(cls, db: Session, user_id: int | None = None) -> dict:
         stmt = (
             select(
                 func.count(Sale.id).label("count"),
@@ -52,11 +56,13 @@ class SaleRepository(BaseRepository[Sale]):
             )
             .where(Sale.status == "pendente", Sale.is_active.is_(True))
         )
+        if user_id is not None:
+            stmt = stmt.where(Sale.user_id == user_id)
         row = db.execute(stmt).one()
         return {"pending_count": row.count, "pending_amount": float(row.pending)}
 
     @classmethod
-    def confirmed_summary(cls, db: Session) -> dict:
+    def confirmed_summary(cls, db: Session, user_id: int | None = None) -> dict:
         stmt = (
             select(
                 func.count(Sale.id).label("count"),
@@ -64,5 +70,7 @@ class SaleRepository(BaseRepository[Sale]):
             )
             .where(Sale.status == "confirmada", Sale.is_active.is_(True))
         )
+        if user_id is not None:
+            stmt = stmt.where(Sale.user_id == user_id)
         row = db.execute(stmt).one()
         return {"confirmed_count": row.count, "confirmed_amount": float(row.confirmed)}

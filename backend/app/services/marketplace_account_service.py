@@ -111,6 +111,20 @@ class MarketplaceAccountService:
                 f"Suportados: {', '.join(SUPPORTED_MARKETPLACES)}."
             )
 
+        extra = {}
+        if data.extra:
+            extra = json.loads(data.extra) if isinstance(data.extra, str) else data.extra
+
+        if marketplace == "shopee":
+            app_id = str(extra.get("app_id") or "").strip()
+            secret = str(extra.get("secret") or "").strip()
+            if not app_id or not secret:
+                raise ValueError(
+                    "Para conectar a Shopee, informe 'app_id' e 'secret' "
+                    "no campo extra (JSON): "
+                    'extra={"app_id": "...", "secret": "..."}.'
+                )
+
         existing = MarketplaceAccountService.get_by_user_and_marketplace(
             db, user.id, marketplace
         )
@@ -121,13 +135,35 @@ class MarketplaceAccountService:
             )
 
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        # Reconexão: reativa a conta inativa do mesmo marketplace (soft delete)
+        inactive = (
+            db.query(MarketplaceAccount)
+            .filter(
+                MarketplaceAccount.user_id == user.id,
+                MarketplaceAccount.marketplace == marketplace,
+                MarketplaceAccount.is_active.is_(False),
+            )
+            .first()
+        )
+        if inactive is not None:
+            inactive.is_active = True
+            inactive.status = "conectada"
+            inactive.last_validated_at = now
+            inactive.access_token = _encrypt((data.access_token or "").strip())
+            inactive.refresh_token = _encrypt((data.refresh_token or "").strip())
+            inactive.extra = json.dumps(extra, ensure_ascii=False)
+            db.commit()
+            db.refresh(inactive)
+            return inactive
+
         account = MarketplaceAccount(
             user_id=user.id,
             marketplace=marketplace,
-            access_token=_encrypt(data.access_token.strip()),
+            access_token=_encrypt((data.access_token or "").strip()),
             refresh_token=_encrypt((data.refresh_token or "").strip()),
             extra=json.dumps(
-                json.loads(data.extra) if data.extra else {},
+                extra,
                 ensure_ascii=False,
             ),
             status="conectada",

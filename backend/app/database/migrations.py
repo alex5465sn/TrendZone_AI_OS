@@ -47,6 +47,12 @@ ADD_COLUMN_TABLES = [
     "schedules",
 ]
 
+EXTRA_COLUMNS = {
+    "sales": [
+        ("user_id", "INTEGER NULL"),
+    ],
+}
+
 
 def _table_exists(conn, name: str) -> bool:
     return inspect(conn).has_table(name)
@@ -158,6 +164,20 @@ def _add_marketplace_column(engine: Engine, table: str) -> None:
         logger.info("Migração: coluna marketplace adicionada em %s", table)
 
 
+def _add_columns(engine: Engine, table: str, columns: list[tuple[str, str]]) -> None:
+    with engine.begin() as conn:
+        if not _table_exists(conn, table):
+            return
+        existing = _columns(conn, table)
+        for name, ddl in columns:
+            if name in existing:
+                continue
+            conn.exec_driver_sql(
+                f'ALTER TABLE "{table}" ADD COLUMN "{name}" {ddl}'
+            )
+            logger.info("Migração: coluna %s adicionada em %s", name, table)
+
+
 def run(engine: Engine) -> None:
     for table, cfg in UNIQUE_REBUILD.items():
         try:
@@ -171,6 +191,13 @@ def run(engine: Engine) -> None:
             _add_marketplace_column(engine, table)
         except Exception:
             logger.exception("Falha ao adicionar marketplace em %s", table)
+            raise
+
+    for table, columns in EXTRA_COLUMNS.items():
+        try:
+            _add_columns(engine, table, columns)
+        except Exception:
+            logger.exception("Falha ao adicionar colunas extras em %s", table)
             raise
 
     logger.info("Migrações multi-marketplace concluídas.")

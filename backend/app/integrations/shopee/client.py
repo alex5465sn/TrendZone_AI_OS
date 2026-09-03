@@ -35,9 +35,13 @@ class ShopeeClient:
     def __init__(
         self,
         access_token: str | None = None,
+        app_id: str | None = None,
+        secret: str | None = None,
     ):
 
         self.access_token = access_token
+        self.app_id = app_id
+        self.secret = secret
 
     # =====================================================
     # HEADERS
@@ -54,7 +58,9 @@ class ShopeeClient:
 
         headers.update(
             ShopeeSignature.authorization_header(
-                payload
+                payload,
+                app_id=self.app_id,
+                secret=self.secret,
             )
         )
 

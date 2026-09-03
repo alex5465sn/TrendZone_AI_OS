@@ -62,20 +62,26 @@ class ShopeeSignature:
         cls,
         payload: dict[str, Any],
         timestamp: int | None = None,
+        app_id: str | None = None,
+        secret: str | None = None,
     ) -> str:
         """
         Calcula a assinatura SHA256.
 
         Signature = SHA256(AppId + Timestamp + Payload + Secret)
+
+        Credenciais explicitas (app_id/secret) tem prioridade;
+        quando ausentes, usa as globais do settings (.env).
         """
 
-        app_id = settings.SHOPEE_APP_ID
-        secret = settings.SHOPEE_SECRET
+        app_id = app_id or settings.SHOPEE_APP_ID
+        secret = secret or settings.SHOPEE_SECRET
 
         if not app_id or not secret:
 
             raise ValueError(
-                "SHOPEE_APP_ID e SHOPEE_SECRET devem estar configurados."
+                "SHOPEE_APP_ID e SHOPEE_SECRET devem estar configurados "
+                "(globais no .env ou na conta do usuário)."
             )
 
         if timestamp is None:
@@ -97,6 +103,8 @@ class ShopeeSignature:
         cls,
         payload: dict[str, Any],
         timestamp: int | None = None,
+        app_id: str | None = None,
+        secret: str | None = None,
     ) -> dict[str, str]:
         """
         Monta o header Authorization completo.
@@ -104,7 +112,7 @@ class ShopeeSignature:
         Authorization: SHA256 Credential={AppId}, Timestamp={Timestamp}, Signature={Signature}
         """
 
-        app_id = settings.SHOPEE_APP_ID
+        app_id = app_id or settings.SHOPEE_APP_ID
 
         if not app_id:
 
@@ -119,6 +127,8 @@ class ShopeeSignature:
         signature = cls.sign(
             payload,
             timestamp,
+            app_id,
+            secret,
         )
 
         return {

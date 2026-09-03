@@ -21,6 +21,7 @@ from app.models.campaign import Campaign
 from app.repositories.sale_repository import SaleRepository
 from app.repositories.campaign_repository import CampaignRepository
 from app.services.sales_tracker_service import SalesTrackerService
+from app.services.marketplace_account_service import MarketplaceAccountService
 from app.api.response import ResponseBuilder
 
 router = APIRouter(prefix="/sales", tags=["Sales & Commissions"])
@@ -32,13 +33,44 @@ class TrackingLinkRequest(BaseModel):
     sub_ids: list[str] = []
 
 
+def _shopee_credentials(db: Session, user: User) -> dict | None:
+    """
+    Credenciais da conta Shopee conectada pelo usuário.
+
+    Retorna None quando o usuário não conectou conta própria —
+    nesse caso os fluxos usam as credenciais globais (.env),
+    preservando o comportamento do admin/dono.
+    """
+    try:
+        creds = MarketplaceAccountService.get_credentials(
+            db, user.id, "shopee"
+        )
+    except Exception:
+        return None
+
+    if not creds:
+        return None
+
+    extra = creds.get("extra") or {}
+    app_id = str(extra.get("app_id") or "").strip()
+    secret = str(extra.get("secret") or "").strip()
+
+    if not app_id or not secret:
+        return None
+
+    return {"app_id": app_id, "secret": secret}
+
+
 @router.post("/sync")
 def sync_conversions(
     days: int = Query(7, ge=1, le=90),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    nodes = SalesTrackerService.fetch_conversions(days_back=days)
+    nodes = SalesTrackerService.fetch_conversions(
+        days_back=days,
+        credentials=_shopee_credentials(db, current_user),
+    )
 
     new_count = 0
     updated_count = 0
@@ -48,6 +80,9 @@ def sync_conversions(
         existing = SaleRepository.get_by_conversion_id(db, parsed["conversion_id"])
 
         if existing:
+            if existing.user_id is None:
+                existing.user_id = current_user.id
+
             existing.order_status = parsed["order_status"]
             existing.total_commission = parsed["total_commission"]
             existing.net_commission = parsed["net_commission"]
@@ -71,6 +106,7 @@ def sync_conversions(
 
             sale = Sale(
                 conversion_id=parsed["conversion_id"],
+                user_id=current_user.id,
                 order_id=parsed["order_id"],
                 order_status=parsed["order_status"],
                 shop_type=parsed["shop_type"],
@@ -110,6 +146,12 @@ def list_sales(
     else:
         sales = SaleRepository.get_all(db)
 
+    if current_user.role != "ADMIN":
+        sales = [
+            s for s in sales
+            if s.user_id == current_user.id
+        ]
+
     sales.sort(key=lambda s: s.created_at or datetime.min, reverse=True)
 
     return ResponseBuilder.success(
@@ -142,9 +184,10 @@ def financial_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    total = SaleRepository.financial_summary(db)
-    pending = SaleRepository.pending_summary(db)
-    confirmed = SaleRepository.confirmed_summary(db)
+    owner_id = None if current_user.role == "ADMIN" else current_user.id
+    total = SaleRepository.financial_summary(db, owner_id)
+    pending = SaleRepository.pending_summary(db, owner_id)
+    confirmed = SaleRepository.confirmed_summary(db, owner_id)
 
     return ResponseBuilder.success(
         data={
@@ -165,6 +208,7 @@ def generate_tracking_link(
     result = SalesTrackerService.generate_tracking_link(
         origin_url=payload.origin_url,
         sub_ids=payload.sub_ids,
+        credentials=_shopee_credentials(db, current_user),
     )
 
     if payload.campaign_id:
