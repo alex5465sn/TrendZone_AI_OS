@@ -1,1 +1,10 @@
 node_modules
+.venv
+__pycache__
+*.pyc
+.env
+*.log
+.vscode/.server-controller-port.log
+dist
+*.db-journal
+estrutura.txt
