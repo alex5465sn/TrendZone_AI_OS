@@ -29,6 +29,8 @@ from app.api.prospects import router as prospects_router
 from app.api.sales import router as sales_router
 from app.api.inspector import router as inspector_router
 
+from app.services.auto_publisher_service import AutoPublisherService
+
 # ============================
 # NOVA API SHOPEE
 # ============================
@@ -52,7 +54,11 @@ async def lifespan(app: FastAPI):
 
     Base.metadata.create_all(bind=engine)
 
+    AutoPublisherService.start()
+
     yield
+
+    AutoPublisherService.stop()
 
     print("\n========================================")
     print("Encerrando Backend...")

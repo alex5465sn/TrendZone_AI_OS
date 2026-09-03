@@ -14,7 +14,6 @@ import {
     Link,
 } from "@mui/material";
 
-import LockIcon from "@mui/icons-material/Lock";
 
 import { login } from "../../services/authService";
 
@@ -100,20 +99,17 @@ export default function Login() {
                         >
 
                             <Box
+                                component="img"
+                                src="/brand/logo.png"
+                                alt="TrendZone AI OS"
                                 sx={{
-                                    p: 2,
-                                    borderRadius: 2,
-                                    backgroundColor: "#2563EB",
-                                    color: "#fff",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
+                                    width: 96,
+                                    height: 96,
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    boxShadow: "0 0 24px rgba(249,115,22,0.55)",
                                 }}
-                            >
-
-                                <LockIcon sx={{ fontSize: 32 }} />
-
-                            </Box>
+                            />
 
                         </Box>
 
@@ -124,7 +120,7 @@ export default function Login() {
                             textAlign="center"
                             mb={1}
                         >
-                            TrendZone AI
+                            TrendZone<Box component="span" sx={{ color: "#F97316" }}>AI</Box>
                         </Typography>
 
                         <Typography

@@ -14,7 +14,6 @@ import InventoryIcon from "@mui/icons-material/Inventory2";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import SettingsIcon from "@mui/icons-material/Settings";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
@@ -116,15 +115,18 @@ export default function Sidebar() {
                 }}
             >
 
-                <Avatar
+                <Box
+                    component="img"
+                    src="/brand/logo.png"
+                    alt="TrendZone AI OS"
                     sx={{
-                        backgroundColor: "#2563EB",
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        boxShadow: "0 0 12px rgba(249,115,22,0.5)",
                     }}
-                >
-                    <TrendingUpIcon />
-                </Avatar>
+                />
 
                 <Box>
 
@@ -133,7 +135,7 @@ export default function Sidebar() {
                         fontWeight="bold"
                         sx={{ fontSize: "1.1rem", lineHeight: 1.2 }}
                     >
-                        TrendZone AI
+                        TrendZone<Box component="span" sx={{ color: "#F97316" }}>AI</Box>
                     </Typography>
 
                     <Typography
