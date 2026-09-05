@@ -30,6 +30,7 @@ from app.api.prospects import router as prospects_router
 from app.api.sales import router as sales_router
 from app.api.inspector import router as inspector_router
 from app.api.marketplace_accounts import router as marketplace_accounts_router
+from app.api.facebook import router as facebook_router
 
 from app.services.auto_publisher_service import AutoPublisherService
 
@@ -151,6 +152,8 @@ app.include_router(sales_router)
 app.include_router(inspector_router)
 
 app.include_router(marketplace_accounts_router)
+
+app.include_router(facebook_router)
 
 # ============================
 # Shopee Affiliate API

@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     SHOPEE_REFRESH_TOKEN: str = ""
 
     #################################
+    # FACEBOOK
+    #################################
+
+    FACEBOOK_PAGE_ID: str = ""
+
+    FACEBOOK_PAGE_TOKEN: str = ""
+
+    #################################
     # CORS / URLS
     #################################
 

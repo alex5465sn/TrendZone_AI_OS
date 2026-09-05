@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
     Box,
@@ -22,10 +22,13 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
 
+import FacebookIcon from "@mui/icons-material/Facebook";
+
 import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
 import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
 import { generateFacebookPost } from "../../utils/postGenerator";
+import { getFacebookStatus, postToFacebook } from "../../services/facebookService";
 
 function calculateScore(product: ShopeeProductNode): number {
 
@@ -73,6 +76,15 @@ export default function Scout() {
     });
     const [postProductId, setPostProductId] = useState<number | null>(null);
     const [postText, setPostText] = useState("");
+    const [postProduct, setPostProduct] = useState<ShopeeProductNode | null>(null);
+    const [fbConfigured, setFbConfigured] = useState(false);
+    const [posting, setPosting] = useState(false);
+
+    useEffect(() => {
+        getFacebookStatus()
+            .then((s) => setFbConfigured(s.configured))
+            .catch(() => setFbConfigured(false));
+    }, []);
 
     async function handleSearch() {
 
@@ -178,6 +190,7 @@ export default function Scout() {
         });
         setPostText(text);
         setPostProductId(product.itemId);
+        setPostProduct(product);
     }
 
     async function handleCopyPost() {
@@ -187,6 +200,35 @@ export default function Scout() {
         } catch {
             alert("Não foi possível copiar automaticamente. Selecione e copie o texto manualmente.");
         }
+    }
+
+    async function handlePostToFacebook() {
+
+        if (!postProduct) return;
+
+        try {
+
+            setPosting(true);
+
+            await postToFacebook({
+                message: postText,
+                link: postProduct.offerLink,
+                image_url: postProduct.imageUrl,
+            });
+
+            alert("✓ Publicado na página do Facebook com sucesso!");
+
+        } catch (err: any) {
+
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao publicar no Facebook.");
+
+        } finally {
+
+            setPosting(false);
+
+        }
+
     }
 
     async function handleAddProduct(product: ShopeeProductNode) {
@@ -334,12 +376,28 @@ export default function Scout() {
                     sx={{ mb: 3, whiteSpace: "pre-wrap" }}
                     onClose={() => setPostProductId(null)}
                     action={
-                        <Button color="inherit" size="small" onClick={handleCopyPost}>
-                            Copiar
-                        </Button>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                            <Button color="inherit" size="small" onClick={handleCopyPost}>
+                                Copiar
+                            </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
+                                startIcon={<FacebookIcon />}
+                                onClick={handlePostToFacebook}
+                                disabled={!fbConfigured || posting}
+                            >
+                                {posting ? "Publicando..." : "Postar no Facebook"}
+                            </Button>
+                        </Box>
                     }
                 >
                     {postText}
+                    {!fbConfigured && (
+                        <Typography variant="caption" display="block" mt={1} color="#94A3B8">
+                            Postagem automática indisponível: configure FACEBOOK_PAGE_ID e FACEBOOK_PAGE_TOKEN no .env do servidor.
+                        </Typography>
+                    )}
                 </Alert>
             )}
 
