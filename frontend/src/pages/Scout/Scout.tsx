@@ -12,27 +12,36 @@ import {
     CardContent,
     Chip,
     Avatar,
+    ToggleButton,
+    ToggleButtonGroup,
 } from "@mui/material";
 
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import AddIcon from "@mui/icons-material/Add";
+import CampaignIcon from "@mui/icons-material/Campaign";
 
 import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
+import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
+import { generateFacebookPost } from "../../utils/postGenerator";
 
 function calculateScore(product: ShopeeProductNode): number {
 
     const rating = Number(product.ratingStar) || 0;
     const sales = product.sales || 0;
     const commission = Number(product.commissionRate) || 0;
+    const discount = Number(product.priceDiscountRate) || 0;
 
-    const salesScore = Math.min(sales / 100, 30);
-    const ratingScore = (rating / 5) * 30;
-    const commissionScore = commission * 100 * 2;
+    // Sinais de "produto campeão com venda rápida":
+    // vendas acumuladas + avaliação + comissão + desconto ativo (indica campanha/promoção em andamento)
+    const salesScore = Math.min(sales / 80, 35);
+    const ratingScore = (rating / 5) * 25;
+    const commissionScore = Math.min(commission * 100 * 1.5, 20);
+    const velocityScore = Math.min(discount / 5, 20);
 
-    return Math.min(Math.round(salesScore + ratingScore + commissionScore), 100);
+    return Math.min(Math.round(salesScore + ratingScore + commissionScore + velocityScore), 100);
 
 }
 
@@ -53,6 +62,17 @@ export default function Scout() {
     const [error, setError] = useState("");
     const [searched, setSearched] = useState(false);
     const [addingProduct, setAddingProduct] = useState<number | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+        try {
+            const raw = localStorage.getItem("trendzone_settings");
+            if (raw) return JSON.parse(raw).favoriteCategories || [];
+        } catch {
+            // ignora
+        }
+        return [];
+    });
+    const [postProductId, setPostProductId] = useState<number | null>(null);
+    const [postText, setPostText] = useState("");
 
     async function handleSearch() {
 
@@ -92,6 +112,81 @@ export default function Scout() {
 
         }
 
+    }
+
+    async function handleFindChampions() {
+
+        const keywords = getKeywordsForCategories(selectedCategories);
+
+        try {
+
+            setLoading(true);
+            setError("");
+            setSearched(true);
+
+            const results = await Promise.allSettled(
+                keywords.map((kw) =>
+                    searchShopeeProducts({ keyword: kw, page: 1, limit: 20, sortType: 2 })
+                )
+            );
+
+            const allNodes: ShopeeProductNode[] = [];
+            const seen = new Set<number>();
+
+            for (const r of results) {
+                if (r.status === "fulfilled") {
+                    for (const node of r.value.nodes || []) {
+                        if (!seen.has(node.itemId)) {
+                            seen.add(node.itemId);
+                            allNodes.push(node);
+                        }
+                    }
+                }
+            }
+
+            const scored = allNodes
+                .map((product) => ({ ...product, _score: calculateScore(product) }))
+                .sort((a, b) => b._score - a._score)
+                .slice(0, 20);
+
+            setProducts(scored as ShopeeProductNode[]);
+
+            if (scored.length === 0) {
+                setError("Nenhum produto campeão encontrado agora. Tente novamente em alguns minutos.");
+            }
+
+        } catch (err) {
+
+            console.error(err);
+            setError("Erro ao buscar produtos campeões.");
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    }
+
+    function handleGeneratePost(product: ShopeeProductNode) {
+        const text = generateFacebookPost({
+            productName: product.productName,
+            price: product.price,
+            priceDiscountRate: product.priceDiscountRate,
+            offerLink: product.offerLink,
+            commissionRate: product.commissionRate,
+        });
+        setPostText(text);
+        setPostProductId(product.itemId);
+    }
+
+    async function handleCopyPost() {
+        try {
+            await navigator.clipboard.writeText(postText);
+            alert("Texto copiado! Cole na sua página do Facebook.");
+        } catch {
+            alert("Não foi possível copiar automaticamente. Selecione e copie o texto manualmente.");
+        }
     }
 
     async function handleAddProduct(product: ShopeeProductNode) {
@@ -183,6 +278,70 @@ export default function Scout() {
                 </Button>
 
             </Box>
+
+            <Box sx={{ mb: 2 }}>
+
+                <Typography color="#94A3B8" fontSize="0.85rem" mb={1}>
+                    Ou deixe o agente IA varrer categorias inteiras em busca de produtos campeões (deixe nenhuma marcada para buscar em todas):
+                </Typography>
+
+                <ToggleButtonGroup
+                    value={selectedCategories}
+                    onChange={(_, value) => setSelectedCategories(value)}
+                    sx={{ flexWrap: "wrap", gap: 1, mb: 2 }}
+                >
+                    {CATEGORIES.map((cat) => (
+                        <ToggleButton
+                            key={cat.id}
+                            value={cat.id}
+                            sx={{
+                                color: "#94A3B8",
+                                borderColor: "#1E293B",
+                                textTransform: "none",
+                                "&.Mui-selected": {
+                                    backgroundColor: "#8B5CF633",
+                                    color: "#8B5CF6",
+                                },
+                            }}
+                        >
+                            {cat.label}
+                        </ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+
+                <Box>
+                    <Button
+                        variant="contained"
+                        startIcon={<TrendingUpIcon />}
+                        onClick={handleFindChampions}
+                        disabled={loading}
+                        sx={{
+                            backgroundColor: "#10B981",
+                            textTransform: "none",
+                            borderRadius: 2,
+                            px: 4,
+                        }}
+                    >
+                        {loading ? <CircularProgress size={20} color="inherit" /> : "Encontrar Produtos Campeões"}
+                    </Button>
+                </Box>
+
+            </Box>
+
+            {postProductId !== null && (
+                <Alert
+                    severity="info"
+                    sx={{ mb: 3, whiteSpace: "pre-wrap" }}
+                    onClose={() => setPostProductId(null)}
+                    action={
+                        <Button color="inherit" size="small" onClick={handleCopyPost}>
+                            Copiar
+                        </Button>
+                    }
+                >
+                    {postText}
+                </Alert>
+            )}
 
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
@@ -340,6 +499,22 @@ export default function Scout() {
                                                 }}
                                             >
                                                 Ver
+                                            </Button>
+
+                                            <Button
+                                                startIcon={<CampaignIcon />}
+                                                onClick={() => handleGeneratePost(product)}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: "#38BDF833",
+                                                    color: "#38BDF8",
+                                                    textTransform: "none",
+                                                    "&:hover": {
+                                                        backgroundColor: "#38BDF855",
+                                                    },
+                                                }}
+                                            >
+                                                Gerar Post
                                             </Button>
 
                                             <Button
