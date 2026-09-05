@@ -6,12 +6,26 @@ import {
     Avatar,
     IconButton,
     Badge,
+    Tooltip,
 } from "@mui/material";
 
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useNavigate } from "react-router-dom";
+
+import { logout, getUserInfo } from "../../services/authService";
 
 export default function Header() {
+
+    const navigate = useNavigate();
+    const user = getUserInfo();
+
+    async function handleLogout() {
+        if (!window.confirm("Deseja encerrar a sessão?")) return;
+        await logout();
+        navigate("/login", { replace: true });
+    }
 
     return (
 
@@ -45,12 +59,25 @@ export default function Header() {
                     </Badge>
                 </IconButton>
 
-                <IconButton
-                    size="large"
-                    sx={{ color: "#94A3B8", mr: 2 }}
-                >
-                    <SettingsIcon />
-                </IconButton>
+                <Tooltip title="Configurações">
+                    <IconButton
+                        size="large"
+                        sx={{ color: "#94A3B8", mr: 1 }}
+                        onClick={() => navigate("/settings")}
+                    >
+                        <SettingsIcon />
+                    </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Encerrar sessão">
+                    <IconButton
+                        size="large"
+                        sx={{ color: "#94A3B8", mr: 2 }}
+                        onClick={handleLogout}
+                    >
+                        <LogoutIcon />
+                    </IconButton>
+                </Tooltip>
 
                 <Box
                     sx={{
@@ -78,14 +105,14 @@ export default function Header() {
                             color="#F8FAFC"
                             lineHeight={1.2}
                         >
-                            Admin
+                            {user?.name || user?.email || "Usuário"}
                         </Typography>
 
                         <Typography
                             variant="caption"
                             color="#94A3B8"
                         >
-                            Afiliado Shopee
+                            {user?.role === "admin" ? "Administrador" : "Afiliado"}
                         </Typography>
 
                     </Box>
