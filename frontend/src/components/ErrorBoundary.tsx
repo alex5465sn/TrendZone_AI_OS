@@ -6,20 +6,21 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  retryCount: number;
 }
 
 function isExtensionDomNoise(error: Error): boolean {
   const msg = error?.message || '';
   return (
-    (msg.includes('removeChild') || msg.includes('insertBefore')) &&
+    (msg.includes('removeChild') || msg.includes('insertBefore') || msg.includes('appendChild')) &&
     msg.includes('not a child of this node')
   );
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, retryCount: 0 };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     if (isExtensionDomNoise(error)) {
       return { hasError: false };
     }
@@ -28,14 +29,16 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (isExtensionDomNoise(error)) {
-      console.warn('Erro de DOM ignorado (provavelmente causado por extensao do navegador):', error.message);
+      if (this.state.retryCount < 3) {
+        this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
+      }
       return;
     }
     console.error('ErrorBoundary capturou um erro:', error, info);
   }
 
   handleReload = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, retryCount: 0 });
     window.location.reload();
   };
 
@@ -45,7 +48,10 @@ class ErrorBoundary extends Component<Props, State> {
         <div style={{ padding: 32, textAlign: 'center', fontFamily: 'sans-serif' }}>
           <h2>Ocorreu um erro inesperado na página.</h2>
           <p>Isso pode ter sido causado por uma extensão do navegador interferindo na página.</p>
-          <button onClick={this.handleReload} style={{ padding: '8px 16px', marginTop: 16 }}>
+          <p style={{ color: '#888', fontSize: 14 }}>
+            Tente abrir em uma aba anônima (Ctrl+Shift+N) ou desativar extensões do navegador.
+          </p>
+          <button onClick={this.handleReload} style={{ padding: '8px 24px', marginTop: 16, cursor: 'pointer' }}>
             Recarregar
           </button>
         </div>

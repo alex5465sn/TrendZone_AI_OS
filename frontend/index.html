@@ -8,6 +8,29 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Protege contra extensões de navegador que removem/inserem nodes no DOM
+      // e causam crash no React ("removeChild: not a child of this node")
+      (function() {
+        if (typeof Node === 'undefined') return;
+        var origRemoveChild = Node.prototype.removeChild;
+        Node.prototype.removeChild = function(child) {
+          if (child.parentNode !== this) {
+            console.warn('removeChild ignorado: node nao eh filho deste parent (provavel extensao)');
+            return child;
+          }
+          return origRemoveChild.call(this, child);
+        };
+        var origInsertBefore = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function(newNode, refNode) {
+          if (refNode && refNode.parentNode !== this) {
+            console.warn('insertBefore ignorado: refNode nao eh filho deste parent (provavel extensao)');
+            return newNode;
+          }
+          return origInsertBefore.call(this, newNode, refNode);
+        };
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
