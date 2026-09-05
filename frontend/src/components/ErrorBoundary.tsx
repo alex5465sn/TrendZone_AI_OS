@@ -8,14 +8,29 @@ interface State {
   hasError: boolean;
 }
 
+function isExtensionDomNoise(error: Error): boolean {
+  const msg = error?.message || '';
+  return (
+    (msg.includes('removeChild') || msg.includes('insertBefore')) &&
+    msg.includes('not a child of this node')
+  );
+}
+
 class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(error: Error): State {
+    if (isExtensionDomNoise(error)) {
+      return { hasError: false };
+    }
     return { hasError: true };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (isExtensionDomNoise(error)) {
+      console.warn('Erro de DOM ignorado (provavelmente causado por extensao do navegador):', error.message);
+      return;
+    }
     console.error('ErrorBoundary capturou um erro:', error, info);
   }
 
