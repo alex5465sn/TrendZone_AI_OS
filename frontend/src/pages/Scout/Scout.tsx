@@ -28,7 +28,13 @@ import { searchShopeeProducts, type ShopeeProductNode } from "../../services/mar
 import { createProduct } from "../../services/productService";
 import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
 import { generateFacebookPost } from "../../utils/postGenerator";
-import { getFacebookStatus, postToFacebook } from "../../services/facebookService";
+import {
+    getFacebookStatus,
+    postToFacebook,
+    generateProductVideo,
+    postVideoToFacebook,
+    createScheduledPost,
+} from "../../services/facebookService";
 
 function calculateScore(product: ShopeeProductNode): number {
 
@@ -88,6 +94,11 @@ export default function Scout() {
         }
         return [];
     });
+    const [generatingVideo, setGeneratingVideo] = useState(false);
+    const [videoUrl, setVideoUrl] = useState("");
+    const [videoFile, setVideoFile] = useState("");
+    const [postingVideo, setPostingVideo] = useState(false);
+    const [scheduling, setScheduling] = useState(false);
 
     useEffect(() => {
         getFacebookStatus()
@@ -208,6 +219,75 @@ export default function Scout() {
         setPostText(text);
         setPostProductId(product.itemId);
         setPostProduct(product);
+        setVideoUrl("");
+        setVideoFile("");
+    }
+
+    async function handleGenerateVideo() {
+        if (!postProduct) return;
+        try {
+            setGeneratingVideo(true);
+            const video = await generateProductVideo({
+                image_url: postProduct.imageUrl,
+                title: postProduct.productName,
+                price: typeof postProduct.price === "number" ? postProduct.price.toFixed(2) : String(postProduct.price),
+                discount_rate: postProduct.priceDiscountRate,
+            });
+            setVideoUrl(video.url);
+            setVideoFile(video.file);
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao gerar o vídeo do produto.");
+        } finally {
+            setGeneratingVideo(false);
+        }
+    }
+
+    async function handlePostVideoToFacebook() {
+        if (!videoFile) return;
+        try {
+            setPostingVideo(true);
+            await postVideoToFacebook(videoFile, postText);
+            alert("✓ Vídeo publicado na página do Facebook com sucesso!");
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao publicar o vídeo no Facebook.");
+        } finally {
+            setPostingVideo(false);
+        }
+    }
+
+    async function handleSchedulePost() {
+        if (!postProduct) return;
+        const when = window.prompt(
+            "Agendar para quando? Use o formato AAAA-MM-DD HH:MM (ex: 2026-09-08 19:00)",
+            ""
+        );
+        if (!when) return;
+
+        const scheduledDate = new Date(when.replace(" ", "T"));
+        if (isNaN(scheduledDate.getTime())) {
+            alert("Data/hora inválida. Use o formato AAAA-MM-DD HH:MM.");
+            return;
+        }
+
+        try {
+            setScheduling(true);
+            await createScheduledPost({
+                product_item_id: postProduct.itemId,
+                message: postText,
+                link: postProduct.offerLink,
+                image_url: videoFile ? undefined : postProduct.imageUrl,
+                video_file: videoFile || undefined,
+                scheduled_at: scheduledDate.toISOString(),
+            });
+            alert(`✓ Post agendado para ${scheduledDate.toLocaleString()}!`);
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao agendar o post.");
+        } finally {
+            setScheduling(false);
+        }
     }
 
     async function handleCopyPost() {
@@ -400,7 +480,7 @@ export default function Scout() {
                     sx={{ mb: 3, whiteSpace: "pre-wrap" }}
                     onClose={() => setPostProductId(null)}
                     action={
-                        <Box sx={{ display: "flex", gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                             <Button color="inherit" size="small" onClick={handleCopyPost}>
                                 Copiar
                             </Button>
@@ -417,6 +497,33 @@ export default function Scout() {
                                     ? "Postar de novo"
                                     : "Postar no Facebook"}
                             </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
+                                onClick={handleGenerateVideo}
+                                disabled={generatingVideo}
+                            >
+                                {generatingVideo ? "Gerando vídeo..." : "Gerar Vídeo"}
+                            </Button>
+                            {videoFile && (
+                                <Button
+                                    color="inherit"
+                                    size="small"
+                                    startIcon={<FacebookIcon />}
+                                    onClick={handlePostVideoToFacebook}
+                                    disabled={!fbConfigured || postingVideo}
+                                >
+                                    {postingVideo ? "Publicando vídeo..." : "Postar Vídeo no Facebook"}
+                                </Button>
+                            )}
+                            <Button
+                                color="inherit"
+                                size="small"
+                                onClick={handleSchedulePost}
+                                disabled={scheduling}
+                            >
+                                {scheduling ? "Agendando..." : "Agendar"}
+                            </Button>
                         </Box>
                     }
                 >
@@ -425,6 +532,18 @@ export default function Scout() {
                         <Typography variant="caption" display="block" mt={1} color="#94A3B8">
                             Postagem automática indisponível: configure FACEBOOK_PAGE_ID e FACEBOOK_PAGE_TOKEN no .env do servidor.
                         </Typography>
+                    )}
+                    {videoUrl && (
+                        <Box mt={2}>
+                            <Typography variant="caption" display="block" mb={1}>
+                                Prévia do vídeo gerado:
+                            </Typography>
+                            <video
+                                src={`http://127.0.0.1:8000${videoUrl}`}
+                                controls
+                                style={{ maxWidth: 220, borderRadius: 8 }}
+                            />
+                        </Box>
                     )}
                 </Alert>
             )}

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.settings import settings
 from app.core.exceptions import (
@@ -31,8 +32,11 @@ from app.api.sales import router as sales_router
 from app.api.inspector import router as inspector_router
 from app.api.marketplace_accounts import router as marketplace_accounts_router
 from app.api.facebook import router as facebook_router
+from app.api.scheduled_posts import router as scheduled_posts_router
 
 from app.services.auto_publisher_service import AutoPublisherService
+from app.services.facebook_scheduler_service import FacebookSchedulerService
+from app.services.video_generator import MEDIA_DIR
 
 # ============================
 # NOVA API SHOPEE
@@ -60,10 +64,12 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
     AutoPublisherService.start()
+    FacebookSchedulerService.start()
 
     yield
 
     AutoPublisherService.stop()
+    FacebookSchedulerService.stop()
 
     print("\n========================================")
     print("Encerrando Backend...")
@@ -154,6 +160,10 @@ app.include_router(inspector_router)
 app.include_router(marketplace_accounts_router)
 
 app.include_router(facebook_router)
+
+app.include_router(scheduled_posts_router)
+
+app.mount("/media", StaticFiles(directory=str(MEDIA_DIR.parent)), name="media")
 
 # ============================
 # Shopee Affiliate API
