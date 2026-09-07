@@ -36,6 +36,7 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     candidates = [
         "C:\\Windows\\Fonts\\arialbd.ttf" if bold else "C:\\Windows\\Fonts\\arial.ttf",
         "C:\\Windows\\Fonts\\segoeuib.ttf" if bold else "C:\\Windows\\Fonts\\segoeui.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]
     for path in candidates:
         try:
