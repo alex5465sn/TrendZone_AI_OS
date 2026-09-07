@@ -79,12 +79,29 @@ export default function Scout() {
     const [postProduct, setPostProduct] = useState<ShopeeProductNode | null>(null);
     const [fbConfigured, setFbConfigured] = useState(false);
     const [posting, setPosting] = useState(false);
+    const [postedIds, setPostedIds] = useState<number[]>(() => {
+        try {
+            const raw = localStorage.getItem("trendzone_fb_posted");
+            if (raw) return JSON.parse(raw);
+        } catch {
+            // ignora
+        }
+        return [];
+    });
 
     useEffect(() => {
         getFacebookStatus()
             .then((s) => setFbConfigured(s.configured))
             .catch(() => setFbConfigured(false));
     }, []);
+
+    function markAsPosted(itemId: number) {
+        setPostedIds((prev) => {
+            const next = [...prev, itemId];
+            localStorage.setItem("trendzone_fb_posted", JSON.stringify(next));
+            return next;
+        });
+    }
 
     async function handleSearch() {
 
@@ -206,6 +223,12 @@ export default function Scout() {
 
         if (!postProduct) return;
 
+        if (postedIds.includes(postProduct.itemId)) {
+            if (!window.confirm("Este produto já foi postado no Facebook antes. Postar de novo mesmo assim?")) {
+                return;
+            }
+        }
+
         try {
 
             setPosting(true);
@@ -216,6 +239,7 @@ export default function Scout() {
                 image_url: postProduct.imageUrl,
             });
 
+            markAsPosted(postProduct.itemId);
             alert("✓ Publicado na página do Facebook com sucesso!");
 
         } catch (err: any) {
@@ -387,7 +411,11 @@ export default function Scout() {
                                 onClick={handlePostToFacebook}
                                 disabled={!fbConfigured || posting}
                             >
-                                {posting ? "Publicando..." : "Postar no Facebook"}
+                                {posting
+                                    ? "Publicando..."
+                                    : postProduct && postedIds.includes(postProduct.itemId)
+                                    ? "Postar de novo"
+                                    : "Postar no Facebook"}
                             </Button>
                         </Box>
                     }
