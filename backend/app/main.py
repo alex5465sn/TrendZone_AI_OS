@@ -33,6 +33,7 @@ from app.api.inspector import router as inspector_router
 from app.api.marketplace_accounts import router as marketplace_accounts_router
 from app.api.facebook import router as facebook_router
 from app.api.scheduled_posts import router as scheduled_posts_router
+from app.commercial_intelligence.api.commercial_intelligence import router as commercial_intelligence_router
 
 from app.services.auto_publisher_service import AutoPublisherService
 from app.services.facebook_scheduler_service import FacebookSchedulerService
@@ -162,6 +163,8 @@ app.include_router(marketplace_accounts_router)
 app.include_router(facebook_router)
 
 app.include_router(scheduled_posts_router)
+
+app.include_router(commercial_intelligence_router)
 
 app.mount("/media", StaticFiles(directory=str(MEDIA_DIR.parent)), name="media")
 
