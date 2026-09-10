@@ -35,6 +35,7 @@ import {
     postVideoToFacebook,
     createScheduledPost,
 } from "../../services/facebookService";
+import { analyzeProduct, type AnalyzeResult } from "../../services/commercialIntelligenceService";
 
 function calculateScore(product: ShopeeProductNode): number {
 
@@ -99,6 +100,8 @@ export default function Scout() {
     const [videoFile, setVideoFile] = useState("");
     const [postingVideo, setPostingVideo] = useState(false);
     const [scheduling, setScheduling] = useState(false);
+    const [analyzingId, setAnalyzingId] = useState<number | null>(null);
+    const [analysisResults, setAnalysisResults] = useState<Record<number, AnalyzeResult>>({});
 
     useEffect(() => {
         getFacebookStatus()
@@ -287,6 +290,26 @@ export default function Scout() {
             alert(err.response?.data?.message || "✗ Erro ao agendar o post.");
         } finally {
             setScheduling(false);
+        }
+    }
+
+    async function handleAnalyzeProduct(product: ShopeeProductNode) {
+        try {
+            setAnalyzingId(product.itemId);
+            const result = await analyzeProduct({
+                price: Number(product.price) || 0,
+                sales: product.sales || 0,
+                rating: Number(product.ratingStar) || 0,
+                commission: Number(product.commissionRate) || 0,
+                priceDiscountRate: Number(product.priceDiscountRate) || 0,
+                productName: product.productName,
+            });
+            setAnalysisResults((prev) => ({ ...prev, [product.itemId]: result }));
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao analisar o produto no TCIE.");
+        } finally {
+            setAnalyzingId(null);
         }
     }
 
@@ -707,6 +730,22 @@ export default function Scout() {
                                             </Button>
 
                                             <Button
+                                                onClick={() => handleAnalyzeProduct(product)}
+                                                disabled={analyzingId === product.itemId}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: "#F59E0B33",
+                                                    color: "#F59E0B",
+                                                    textTransform: "none",
+                                                    "&:hover": {
+                                                        backgroundColor: "#F59E0B55",
+                                                    },
+                                                }}
+                                            >
+                                                {analyzingId === product.itemId ? "Analisando..." : "Analisar (TCIE)"}
+                                            </Button>
+
+                                            <Button
                                                 startIcon={<CampaignIcon />}
                                                 onClick={() => handleGeneratePost(product)}
                                                 size="small"
@@ -742,6 +781,37 @@ export default function Scout() {
                                         </Box>
 
                                     </Box>
+
+                                    {analysisResults[product.itemId] && (
+                                        <Box
+                                            mt={2}
+                                            p={1.5}
+                                            sx={{ backgroundColor: "#0B1120", borderRadius: 2, border: "1px solid #1E293B" }}
+                                        >
+                                            {(() => {
+                                                const a = analysisResults[product.itemId];
+                                                const colorMap: Record<string, string> = {
+                                                    ESCALAR: "#10B981",
+                                                    TESTAR: "#38BDF8",
+                                                    AJUSTAR: "#F59E0B",
+                                                    MATAR: "#EF4444",
+                                                };
+                                                return (
+                                                    <>
+                                                        <Typography fontWeight="bold" sx={{ color: colorMap[a.decision] || "#F8FAFC" }}>
+                                                            TCIE: {a.decision} — Opportunity Score {a.opportunity.score}/100
+                                                        </Typography>
+                                                        <Typography variant="caption" color="#94A3B8" display="block">
+                                                            Lucro líquido estimado: R$ {a.profit.net_profit.toFixed(2)} ({a.profit.net_margin_pct.toFixed(1)}% margem) · ROI: {a.profit.roi_pct.toFixed(1)}%
+                                                        </Typography>
+                                                        <Typography variant="caption" color="#94A3B8" display="block">
+                                                            Preço ideal sugerido: R$ {a.profit.ideal_price.toFixed(2)} · Preço mínimo viável: R$ {a.profit.min_viable_price.toFixed(2)}
+                                                        </Typography>
+                                                    </>
+                                                );
+                                            })()}
+                                        </Box>
+                                    )}
 
                                 </CardContent>
 
