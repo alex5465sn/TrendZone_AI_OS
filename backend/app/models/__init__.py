@@ -28,6 +28,8 @@ from app.models.prospect import Prospect
 from app.models.schedule import Schedule
 from app.models.sale import Sale
 from app.models.marketplace_account import MarketplaceAccount
+from app.models.scheduled_post import ScheduledPost
+from app.models.published_post import PublishedPost
 
 __all__ = (
     "Product",
@@ -38,4 +40,6 @@ __all__ = (
     "Schedule",
     "Sale",
     "MarketplaceAccount",
+    "ScheduledPost",
+    "PublishedPost",
 )

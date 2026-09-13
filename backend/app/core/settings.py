@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     API_PREFIX: str = "/api/v1"
 
+    APP_BASE_URL: str = "http://127.0.0.1:8000"
+
     #################################
     # DATABASE
     #################################

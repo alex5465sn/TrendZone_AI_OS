@@ -28,6 +28,7 @@ import { searchShopeeProducts, type ShopeeProductNode } from "../../services/mar
 import { createProduct } from "../../services/productService";
 import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
 import { generateFacebookPost } from "../../utils/postGenerator";
+import { createTrackingLink } from "../../services/trackingService";
 import {
     getFacebookStatus,
     postToFacebook,
@@ -211,12 +212,27 @@ export default function Scout() {
 
     }
 
-    function handleGeneratePost(product: ShopeeProductNode) {
+    async function handleGeneratePost(product: ShopeeProductNode) {
+        let trackableLink = product.offerLink;
+
+        try {
+            const tracking = await createTrackingLink({
+                product_item_id: product.itemId,
+                product_name: product.productName,
+                destination_url: product.offerLink,
+                channel: "facebook",
+                post_format: "texto",
+            });
+            trackableLink = tracking.tracking_url;
+        } catch (err) {
+            console.error("Falha ao criar link de rastreamento, usando link original.", err);
+        }
+
         const text = generateFacebookPost({
             productName: product.productName,
             price: product.price,
             priceDiscountRate: product.priceDiscountRate,
-            offerLink: product.offerLink,
+            offerLink: trackableLink,
             commissionRate: product.commissionRate,
         });
         setPostText(text);
