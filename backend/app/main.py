@@ -34,6 +34,7 @@ from app.api.marketplace_accounts import router as marketplace_accounts_router
 from app.api.facebook import router as facebook_router
 from app.api.scheduled_posts import router as scheduled_posts_router
 from app.api.published_posts import router as tracking_router, public_router as tracking_public_router
+from app.api.admin_seed import router as admin_seed_router
 from app.commercial_intelligence.api.commercial_intelligence import router as commercial_intelligence_router
 
 from app.services.auto_publisher_service import AutoPublisherService
@@ -168,6 +169,8 @@ app.include_router(scheduled_posts_router)
 app.include_router(tracking_router)
 
 app.include_router(tracking_public_router)
+
+app.include_router(admin_seed_router)
 
 app.include_router(commercial_intelligence_router)
 
