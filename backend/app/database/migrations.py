@@ -179,6 +179,14 @@ def _add_columns(engine: Engine, table: str, columns: list[tuple[str, str]]) -> 
 
 
 def run(engine: Engine) -> None:
+    if engine.dialect.name != "sqlite":
+        logger.info(
+            "Migrações legadas são específicas do SQLite; banco atual é %s. "
+            "Base.metadata.create_all cuidará da criação do schema.",
+            engine.dialect.name,
+        )
+        return
+
     for table, cfg in UNIQUE_REBUILD.items():
         try:
             _rebuild(engine, table, cfg["legacy"])
