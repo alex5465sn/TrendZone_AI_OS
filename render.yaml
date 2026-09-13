@@ -16,6 +16,8 @@ services:
         fromDatabase:
           name: trendzone-db
           property: connectionString
+      - key: SHOPEE_GRAPHQL_URL
+        value: https://open-api.affiliate.shopee.com.br/graphql
       - key: SHOPEE_APP_ID
         sync: false
       - key: SHOPEE_SECRET
