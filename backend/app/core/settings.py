@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # CORS / URLS
     #################################
 
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://192.168.0.5:5173,http://192.168.0.5:8000"
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://192.168.0.5:5173,http://192.168.0.5:8000,https://trend-zone-ai-os.vercel.app"
 
     FRONTEND_URL: str = "http://127.0.0.1:5173"
 
