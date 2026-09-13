@@ -249,7 +249,7 @@ export default function Scout() {
             const video = await generateProductVideo({
                 image_url: postProduct.imageUrl,
                 title: postProduct.productName,
-                price: typeof postProduct.price === "number" ? postProduct.price.toFixed(2) : String(postProduct.price),
+                price: Number(postProduct.price).toFixed(2),
                 discount_rate: postProduct.priceDiscountRate,
             });
             setVideoUrl(video.url);
