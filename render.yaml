@@ -1,3 +1,9 @@
+databases:
+  - name: trendzone-db
+    plan: free
+    databaseName: trendzone
+    user: trendzone
+
 services:
   - type: web
     name: trendzone-backend
@@ -7,7 +13,9 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: trendzone-db
+          property: connectionString
       - key: SHOPEE_APP_ID
         sync: false
       - key: SHOPEE_SECRET
