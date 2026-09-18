@@ -8,6 +8,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.funnel import FunnelStage, FunnelCard
 from app.api.response import ResponseBuilder
+from app.api.audit_log import record_audit
 
 router = APIRouter(
     prefix="/funnel",
@@ -200,9 +201,15 @@ def move_card(
     if not card:
         raise HTTPException(status_code=404, detail="Card não encontrado.")
 
+    old_stage_id = card.stage_id
     card.stage_id = payload.stage_id
     card.position = payload.position
     db.commit()
+
+    record_audit(
+        db, current_user.id, "funnel_card", "MOVE", card.id,
+        f"Card '{card.title}' movido do estágio {old_stage_id} para {payload.stage_id}",
+    )
 
     return ResponseBuilder.success(message="Card movido.")
 

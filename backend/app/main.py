@@ -42,6 +42,9 @@ from app.api.follow_up import router as follow_up_router
 from app.api.channel_tracking import router as channel_tracking_router
 from app.api.seasonal import router as seasonal_router
 from app.api.discovery import router as discovery_router
+from app.api.automation import router as automation_router
+from app.api.audit_log import router as audit_log_router
+from app.api.vocabulary import router as vocabulary_router
 
 from app.services.auto_publisher_service import AutoPublisherService
 from app.services.facebook_scheduler_service import FacebookSchedulerService
@@ -191,6 +194,12 @@ app.include_router(channel_tracking_router)
 app.include_router(seasonal_router)
 
 app.include_router(discovery_router)
+
+app.include_router(automation_router)
+
+app.include_router(audit_log_router)
+
+app.include_router(vocabulary_router)
 
 app.mount("/media", StaticFiles(directory=str(MEDIA_DIR.parent)), name="media")
 

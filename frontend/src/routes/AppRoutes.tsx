@@ -24,6 +24,9 @@ import ContentStrategyPage from "../pages/ContentStrategy/ContentStrategy";
 import FollowUps from "../pages/FollowUps/FollowUps";
 import Channels from "../pages/Channels/Channels";
 import Seasonal from "../pages/Seasonal/Seasonal";
+import Automation from "../pages/Automation/Automation";
+import AuditLog from "../pages/AuditLog/AuditLog";
+import Vocabulary from "../pages/Vocabulary/Vocabulary";
 
 import { isAuthenticated, isAdmin } from "../services/authService";
 
@@ -143,6 +146,21 @@ export default function AppRoutes() {
                                 <Route
                                     path="/seasonal"
                                     element={<Seasonal />}
+                                />
+
+                                <Route
+                                    path="/automation"
+                                    element={<Automation />}
+                                />
+
+                                <Route
+                                    path="/audit-log"
+                                    element={<AuditLog />}
+                                />
+
+                                <Route
+                                    path="/vocabulary"
+                                    element={<Vocabulary />}
                                 />
 
                             </Routes>

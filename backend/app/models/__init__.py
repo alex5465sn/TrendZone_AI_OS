@@ -35,6 +35,9 @@ from app.models.content_strategy import ContentStrategy
 from app.models.follow_up import FollowUp
 from app.models.channel_tracking import ChannelTracking
 from app.models.seasonal_event import SeasonalEvent
+from app.models.automation_rule import AutomationRule
+from app.models.audit_log import AuditLog
+from app.models.niche_vocabulary import NicheVocabulary
 
 __all__ = (
     "Product",
@@ -53,4 +56,7 @@ __all__ = (
     "FollowUp",
     "ChannelTracking",
     "SeasonalEvent",
+    "AutomationRule",
+    "AuditLog",
+    "NicheVocabulary",
 )

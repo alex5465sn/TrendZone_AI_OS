@@ -26,6 +26,9 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import HubIcon from "@mui/icons-material/Hub";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import BoltIcon from "@mui/icons-material/Bolt";
+import HistoryIcon from "@mui/icons-material/History";
+import TranslateIcon from "@mui/icons-material/Translate";
 
 import { NavLink } from "react-router-dom";
 import { isAdmin } from "../../services/authService";
@@ -114,6 +117,24 @@ const baseMenu = [
         text: "Calendário Sazonal",
         icon: <CalendarMonthIcon />,
         path: "/seasonal",
+    },
+
+    {
+        text: "Automações",
+        icon: <BoltIcon />,
+        path: "/automation",
+    },
+
+    {
+        text: "Log de Auditoria",
+        icon: <HistoryIcon />,
+        path: "/audit-log",
+    },
+
+    {
+        text: "Vocabulário",
+        icon: <TranslateIcon />,
+        path: "/vocabulary",
     },
 
     {
