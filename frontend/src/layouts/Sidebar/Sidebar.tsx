@@ -20,6 +20,12 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import LinkIcon from "@mui/icons-material/Link";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import HubIcon from "@mui/icons-material/Hub";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import { NavLink } from "react-router-dom";
 import { isAdmin } from "../../services/authService";
@@ -72,6 +78,42 @@ const baseMenu = [
         text: "Contas de Afiliado",
         icon: <LinkIcon />,
         path: "/accounts",
+    },
+
+    {
+        text: "Funil de Vendas",
+        icon: <ViewKanbanIcon />,
+        path: "/funnel",
+    },
+
+    {
+        text: "Descoberta",
+        icon: <RocketLaunchIcon />,
+        path: "/discovery",
+    },
+
+    {
+        text: "Conteúdo IA",
+        icon: <AutoAwesomeIcon />,
+        path: "/content-strategy",
+    },
+
+    {
+        text: "Follow-ups",
+        icon: <NotificationsActiveIcon />,
+        path: "/follow-ups",
+    },
+
+    {
+        text: "Canais & SubIDs",
+        icon: <HubIcon />,
+        path: "/channels",
+    },
+
+    {
+        text: "Calendário Sazonal",
+        icon: <CalendarMonthIcon />,
+        path: "/seasonal",
     },
 
     {

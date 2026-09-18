@@ -30,6 +30,11 @@ from app.models.sale import Sale
 from app.models.marketplace_account import MarketplaceAccount
 from app.models.scheduled_post import ScheduledPost
 from app.models.published_post import PublishedPost
+from app.models.funnel import FunnelStage, FunnelCard
+from app.models.content_strategy import ContentStrategy
+from app.models.follow_up import FollowUp
+from app.models.channel_tracking import ChannelTracking
+from app.models.seasonal_event import SeasonalEvent
 
 __all__ = (
     "Product",
@@ -42,4 +47,10 @@ __all__ = (
     "MarketplaceAccount",
     "ScheduledPost",
     "PublishedPost",
+    "FunnelStage",
+    "FunnelCard",
+    "ContentStrategy",
+    "FollowUp",
+    "ChannelTracking",
+    "SeasonalEvent",
 )

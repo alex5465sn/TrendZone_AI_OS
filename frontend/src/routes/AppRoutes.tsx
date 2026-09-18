@@ -18,6 +18,12 @@ import Inspector from "../pages/Inspector/Inspector";
 import Settings from "../pages/Settings/Settings";
 import Accounts from "../pages/Accounts/Accounts";
 import Admin from "../pages/Admin/Admin";
+import Funnel from "../pages/Funnel/Funnel";
+import Discovery from "../pages/Discovery/Discovery";
+import ContentStrategyPage from "../pages/ContentStrategy/ContentStrategy";
+import FollowUps from "../pages/FollowUps/FollowUps";
+import Channels from "../pages/Channels/Channels";
+import Seasonal from "../pages/Seasonal/Seasonal";
 
 import { isAuthenticated, isAdmin } from "../services/authService";
 
@@ -107,6 +113,36 @@ export default function AppRoutes() {
                                 <Route
                                     path="/accounts"
                                     element={<Accounts />}
+                                />
+
+                                <Route
+                                    path="/funnel"
+                                    element={<Funnel />}
+                                />
+
+                                <Route
+                                    path="/discovery"
+                                    element={<Discovery />}
+                                />
+
+                                <Route
+                                    path="/content-strategy"
+                                    element={<ContentStrategyPage />}
+                                />
+
+                                <Route
+                                    path="/follow-ups"
+                                    element={<FollowUps />}
+                                />
+
+                                <Route
+                                    path="/channels"
+                                    element={<Channels />}
+                                />
+
+                                <Route
+                                    path="/seasonal"
+                                    element={<Seasonal />}
                                 />
 
                             </Routes>

@@ -36,6 +36,12 @@ from app.api.scheduled_posts import router as scheduled_posts_router
 from app.api.published_posts import router as tracking_router, public_router as tracking_public_router
 from app.api.admin_seed import router as admin_seed_router
 from app.commercial_intelligence.api.commercial_intelligence import router as commercial_intelligence_router
+from app.api.funnel import router as funnel_router
+from app.api.content_strategy import router as content_strategy_router
+from app.api.follow_up import router as follow_up_router
+from app.api.channel_tracking import router as channel_tracking_router
+from app.api.seasonal import router as seasonal_router
+from app.api.discovery import router as discovery_router
 
 from app.services.auto_publisher_service import AutoPublisherService
 from app.services.facebook_scheduler_service import FacebookSchedulerService
@@ -173,6 +179,18 @@ app.include_router(tracking_public_router)
 app.include_router(admin_seed_router)
 
 app.include_router(commercial_intelligence_router)
+
+app.include_router(funnel_router)
+
+app.include_router(content_strategy_router)
+
+app.include_router(follow_up_router)
+
+app.include_router(channel_tracking_router)
+
+app.include_router(seasonal_router)
+
+app.include_router(discovery_router)
 
 app.mount("/media", StaticFiles(directory=str(MEDIA_DIR.parent)), name="media")
 
