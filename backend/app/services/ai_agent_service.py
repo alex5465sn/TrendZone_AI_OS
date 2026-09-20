@@ -138,7 +138,7 @@ def _call_anthropic(model_name: str, messages: list[dict]) -> dict:
 def _call_abacus(model_name: str, messages: list[dict]) -> dict:
     try:
         resp = requests.post(
-            "https://api.routellm.com/v1/chat/completions",
+            "https://routellm.abacus.ai/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {settings.ABACUS_API_KEY}",
                 "Content-Type": "application/json",
