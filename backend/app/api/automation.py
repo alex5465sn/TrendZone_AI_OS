@@ -15,6 +15,8 @@ from app.models.follow_up import FollowUp
 from app.models.prospect import Prospect
 from app.api.response import ResponseBuilder
 from app.api.audit_log import record_audit
+from app.models.ai_agent_config import AIAgentConfig
+from app.services import ai_agent_service
 
 router = APIRouter(
     prefix="/automation",
@@ -286,4 +288,167 @@ def run_automation(
     return ResponseBuilder.success(
         data={"executions": executions, "total": len(executions)},
         message=f"{len(executions)} ação(ões) executada(s).",
+    )
+
+
+AI_SYSTEM_PROMPT = (
+    "Você é o motor de automação do TrendZone. Analise a situação atual do funil de vendas, "
+    "follow-ups e prospects abaixo, e decida quais ações tomar agora. "
+    "Responda APENAS com um JSON (array), sem texto fora do JSON, no formato: "
+    '[{"action": "create_follow_up", "card_id": 12, "message": "...", "priority": "HIGH|MEDIUM|LOW"}, '
+    '{"action": "change_prospect_status", "prospect_id": 5, "status": "contatado"}, '
+    '{"action": "change_prospect_temperature", "prospect_id": 5, "temperatura": "quente"}, '
+    '{"action": "notify", "message": "..."}]. '
+    "Se nada precisar ser feito, responda com uma lista vazia []. "
+    "Não invente IDs que não estejam na lista fornecida."
+)
+
+
+def _ai_execute(db: Session, user_id: int, decision: dict) -> str:
+    action = decision.get("action")
+
+    if action == "create_follow_up":
+        follow_up = FollowUp(
+            card_id=decision.get("card_id"),
+            product_id=decision.get("product_id"),
+            user_id=user_id,
+            message=decision.get("message", "Follow-up sugerido pela IA."),
+            priority=decision.get("priority", "MEDIUM"),
+        )
+        db.add(follow_up)
+        db.commit()
+        return f"Follow-up criado (card {decision.get('card_id')})"
+
+    if action == "change_prospect_status":
+        prospect = db.query(Prospect).filter(Prospect.id == decision.get("prospect_id")).first()
+        if prospect:
+            prospect.status = decision.get("status", prospect.status)
+            db.commit()
+            return f"Status do prospect '{prospect.nome}' alterado para {prospect.status}"
+        return "Prospect não encontrado para alteração de status."
+
+    if action == "change_prospect_temperature":
+        prospect = db.query(Prospect).filter(Prospect.id == decision.get("prospect_id")).first()
+        if prospect:
+            prospect.temperatura = decision.get("temperatura", prospect.temperatura)
+            db.commit()
+            return f"Temperatura do prospect '{prospect.nome}' alterada para {prospect.temperatura}"
+        return "Prospect não encontrado para alteração de temperatura."
+
+    if action == "notify":
+        return decision.get("message", "Notificação registrada.")
+
+    return f"Ação desconhecida ignorada: {action}"
+
+
+@router.post("/ai-run")
+def ai_run_automation(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    config = db.query(AIAgentConfig).filter(AIAgentConfig.user_id == current_user.id).first()
+    if not config:
+        config = AIAgentConfig(user_id=current_user.id)
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+
+    if not ai_agent_service.is_provider_configured(config.provider):
+        return ResponseBuilder.error(
+            message=f"Provedor de IA '{config.provider}' sem chave de API configurada. Configure em Agente de IA."
+        )
+
+    now = datetime.utcnow()
+    stale_threshold = now - timedelta(days=3)
+
+    stale_cards = (
+        db.query(FunnelCard)
+        .filter(
+            FunnelCard.user_id == current_user.id,
+            FunnelCard.is_active == True,
+            FunnelCard.updated_at < stale_threshold,
+        )
+        .limit(20)
+        .all()
+    )
+
+    overdue_follow_ups = (
+        db.query(FollowUp)
+        .filter(
+            FollowUp.user_id == current_user.id,
+            FollowUp.is_active == True,
+            FollowUp.status == "PENDING",
+            FollowUp.due_at < now,
+        )
+        .limit(20)
+        .all()
+    )
+
+    cold_prospects = (
+        db.query(Prospect)
+        .filter(
+            Prospect.is_active == True,
+            Prospect.updated_at < now - timedelta(days=7),
+            Prospect.temperatura != "frio",
+        )
+        .limit(20)
+        .all()
+    )
+
+    context_summary = {
+        "cards_parados": [
+            {"card_id": c.id, "titulo": c.title, "dias_parado": (now - c.updated_at).days}
+            for c in stale_cards
+        ],
+        "follow_ups_atrasados": [
+            {"follow_up_id": f.id, "card_id": f.card_id, "mensagem": f.message[:80]}
+            for f in overdue_follow_ups
+        ],
+        "prospects_esfriando": [
+            {"prospect_id": p.id, "nome": p.nome, "temperatura_atual": p.temperatura}
+            for p in cold_prospects
+        ],
+    }
+
+    if not any(context_summary.values()):
+        return ResponseBuilder.success(
+            data={"executions": [], "total": 0},
+            message="Nada pendente no momento. A IA não encontrou ações necessárias.",
+        )
+
+    result = ai_agent_service.generate_reply(
+        provider=config.provider,
+        model_name=config.model_name,
+        system_prompt=AI_SYSTEM_PROMPT,
+        user_message=json.dumps(context_summary, ensure_ascii=False),
+        history=[],
+    )
+
+    if not result.get("ok"):
+        return ResponseBuilder.error(message=result.get("error", "Falha ao consultar a IA."))
+
+    raw_reply = result.get("reply", "").strip()
+    try:
+        start = raw_reply.index("[")
+        end = raw_reply.rindex("]") + 1
+        decisions = json.loads(raw_reply[start:end])
+    except (ValueError, json.JSONDecodeError):
+        return ResponseBuilder.error(message="A IA não retornou uma decisão em formato válido. Tente novamente.")
+
+    executions = []
+    for decision in decisions:
+        if not isinstance(decision, dict):
+            continue
+        msg = _ai_execute(db, current_user.id, decision)
+        executions.append({"action": decision.get("action"), "result": msg})
+
+    if executions:
+        record_audit(
+            db, current_user.id, "automation_ai", "RUN", None,
+            f"Agente de IA executou {len(executions)} ação(ões) automaticamente",
+        )
+
+    return ResponseBuilder.success(
+        data={"executions": executions, "total": len(executions)},
+        message=f"Agente de IA analisou o cenário e executou {len(executions)} ação(ões).",
     )

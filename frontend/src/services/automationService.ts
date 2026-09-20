@@ -50,3 +50,7 @@ export async function deleteRule(id: number) {
 export async function runAutomation() {
     return postData<{ executions: any[]; total: number }, {}>("/automation/run", {});
 }
+
+export async function runAiAutomation() {
+    return postData<{ executions: any[]; total: number }, {}>("/automation/ai-run", {});
+}

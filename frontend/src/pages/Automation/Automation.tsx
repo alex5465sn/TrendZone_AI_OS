@@ -33,6 +33,7 @@ import {
     updateRule,
     deleteRule,
     runAutomation,
+    runAiAutomation,
     type AutomationRuleItem,
     type DefinitionItem,
 } from "../../services/automationService";
@@ -43,6 +44,7 @@ export default function Automation() {
     const [actions, setActions] = useState<DefinitionItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [running, setRunning] = useState(false);
+    const [aiRunning, setAiRunning] = useState(false);
     const [error, setError] = useState("");
     const [toast, setToast] = useState("");
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -134,6 +136,19 @@ export default function Automation() {
         }
     }
 
+    async function handleAiRun() {
+        try {
+            setAiRunning(true);
+            const result = await runAiAutomation();
+            setToast(result.total > 0 ? `IA executou ${result.total} ação(ões)!` : "Nada pendente no momento. A IA não encontrou ações necessárias.");
+            load();
+        } catch (e: any) {
+            setError(e?.response?.data?.message || "Erro ao executar o agente de IA.");
+        } finally {
+            setAiRunning(false);
+        }
+    }
+
     function triggerName(id: string) {
         return triggers.find((t) => t.id === id)?.name || id;
     }
@@ -152,15 +167,22 @@ export default function Automation() {
                         Motor QUANDO / SE / ENTÃO — "nada morre no silêncio"
                     </Typography>
                 </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                    <Button variant="outlined" startIcon={<PlayArrowIcon />} onClick={handleRun} disabled={running} sx={{ borderColor: "#10B981", color: "#10B981" }}>
-                        {running ? "Executando..." : "Executar Agora"}
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    <Button variant="contained" startIcon={<BoltIcon />} onClick={handleAiRun} disabled={aiRunning} sx={{ backgroundColor: "#F59E0B" }}>
+                        {aiRunning ? "Agente de IA analisando..." : "Deixar a IA Decidir"}
                     </Button>
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)} sx={{ backgroundColor: "#2563EB" }}>
-                        Nova Regra
+                    <Button variant="outlined" startIcon={<PlayArrowIcon />} onClick={handleRun} disabled={running} sx={{ borderColor: "#10B981", color: "#10B981" }}>
+                        {running ? "Executando..." : "Executar Regras"}
+                    </Button>
+                    <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)} sx={{ borderColor: "#334155", color: "#94A3B8" }}>
+                        Nova Regra Manual
                     </Button>
                 </Box>
             </Box>
+
+            <Alert severity="info" sx={{ mb: 2, backgroundColor: "#0F172A", color: "#94A3B8", border: "1px solid #334155" }}>
+                "Deixar a IA Decidir" analisa cards parados, follow-ups atrasados e prospects esfriando, e executa as ações necessárias sozinha — sem precisar cadastrar regras manuais.
+            </Alert>
 
             {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
 
