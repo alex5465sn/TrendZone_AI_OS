@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./backend/trendzone.db:/app/backend/trendzone.db
+      - ./backend/trendzone.db/trendzone.db:/app/backend/trendzone.db
       - ./backend/logs:/app/backend/logs
       - ./backend/media:/app/backend/media
     ports:
@@ -20,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:8000}
     container_name: trendzone_frontend
     ports:
       - "4173:4173"
