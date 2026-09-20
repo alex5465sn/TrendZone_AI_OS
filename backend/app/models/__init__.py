@@ -38,6 +38,8 @@ from app.models.seasonal_event import SeasonalEvent
 from app.models.automation_rule import AutomationRule
 from app.models.audit_log import AuditLog
 from app.models.niche_vocabulary import NicheVocabulary
+from app.models.whatsapp import WhatsAppConnection, WhatsAppMessage
+from app.models.ai_agent_config import AIAgentConfig
 
 __all__ = (
     "Product",
@@ -59,4 +61,7 @@ __all__ = (
     "AutomationRule",
     "AuditLog",
     "NicheVocabulary",
+    "WhatsAppConnection",
+    "WhatsAppMessage",
+    "AIAgentConfig",
 )

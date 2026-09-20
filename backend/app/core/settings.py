@@ -60,6 +60,26 @@ class Settings(BaseSettings):
     FACEBOOK_PAGE_TOKEN: str = ""
 
     #################################
+    # WHATSAPP (WAHA)
+    #################################
+
+    WAHA_URL: str = "http://localhost:3000"
+
+    WAHA_API_KEY: str = ""
+
+    #################################
+    # IA (AGENTE)
+    #################################
+
+    OPENROUTER_API_KEY: str = ""
+
+    OPENROUTER_MODEL: str = "openai/gpt-4o-mini"
+
+    OPENAI_API_KEY: str = ""
+
+    ANTHROPIC_API_KEY: str = ""
+
+    #################################
     # CORS / URLS
     #################################
 

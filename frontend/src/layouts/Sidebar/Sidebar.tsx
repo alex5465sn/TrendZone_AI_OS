@@ -29,6 +29,8 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import BoltIcon from "@mui/icons-material/Bolt";
 import HistoryIcon from "@mui/icons-material/History";
 import TranslateIcon from "@mui/icons-material/Translate";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 
 import { NavLink } from "react-router-dom";
 import { isAdmin } from "../../services/authService";
@@ -135,6 +137,18 @@ const baseMenu = [
         text: "Vocabulário",
         icon: <TranslateIcon />,
         path: "/vocabulary",
+    },
+
+    {
+        text: "WhatsApp",
+        icon: <WhatsAppIcon />,
+        path: "/whatsapp",
+    },
+
+    {
+        text: "Agente de IA",
+        icon: <PsychologyIcon />,
+        path: "/ai-agent",
     },
 
     {

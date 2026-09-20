@@ -1,6 +1,18 @@
 version: "3.9"
 
 services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: trendzone_waha
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: WEBJS
+      WAHA_PRINT_QR: "false"
+    volumes:
+      - ./waha_sessions:/app/.sessions
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -8,12 +20,16 @@ services:
     container_name: trendzone_backend
     env_file:
       - .env
+    environment:
+      WAHA_URL: http://waha:3000
     volumes:
       - ./backend/trendzone.db/trendzone.db:/app/backend/trendzone.db
       - ./backend/logs:/app/backend/logs
       - ./backend/media:/app/backend/media
     ports:
       - "8000:8000"
+    depends_on:
+      - waha
     restart: unless-stopped
 
   frontend:

@@ -27,6 +27,8 @@ import Seasonal from "../pages/Seasonal/Seasonal";
 import Automation from "../pages/Automation/Automation";
 import AuditLog from "../pages/AuditLog/AuditLog";
 import Vocabulary from "../pages/Vocabulary/Vocabulary";
+import WhatsApp from "../pages/WhatsApp/WhatsApp";
+import AIAgent from "../pages/AIAgent/AIAgent";
 
 import { isAuthenticated, isAdmin } from "../services/authService";
 
@@ -161,6 +163,16 @@ export default function AppRoutes() {
                                 <Route
                                     path="/vocabulary"
                                     element={<Vocabulary />}
+                                />
+
+                                <Route
+                                    path="/whatsapp"
+                                    element={<WhatsApp />}
+                                />
+
+                                <Route
+                                    path="/ai-agent"
+                                    element={<AIAgent />}
                                 />
 
                             </Routes>
