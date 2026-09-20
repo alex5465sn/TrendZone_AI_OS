@@ -25,12 +25,15 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import WarningIcon from "@mui/icons-material/Warning";
 
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+
 import {
     getStages,
     createCard,
     moveCard,
     deleteCard,
     getRadar,
+    autoPopulate,
     type FunnelStage,
     type CardCreate,
 } from "../../services/funnelService";
@@ -73,6 +76,21 @@ export default function Funnel() {
     }
 
     useEffect(() => { load(); }, []);
+
+    const [syncing, setSyncing] = useState(false);
+
+    async function handleAutoPopulate() {
+        try {
+            setSyncing(true);
+            const result = await autoPopulate();
+            setToast(`${result.created} card(s) criado(s) automaticamente pela IA.`);
+            await load();
+        } catch {
+            setError("Erro ao sincronizar com a IA.");
+        } finally {
+            setSyncing(false);
+        }
+    }
 
     function openNewCard(stageId: number) {
         setForm({ ...form, stage_id: stageId, title: "", description: "", notes: "" });
@@ -139,6 +157,15 @@ export default function Funnel() {
                         Kanban para gerenciar o ciclo de vida dos seus produtos
                     </Typography>
                 </Box>
+                <Button
+                    variant="contained"
+                    startIcon={<AutoAwesomeIcon />}
+                    onClick={handleAutoPopulate}
+                    disabled={syncing}
+                    sx={{ backgroundColor: "#F97316", "&:hover": { backgroundColor: "#EA580C" }, height: "fit-content" }}
+                >
+                    {syncing ? "Sincronizando..." : "Sincronizar com IA"}
+                </Button>
                 {radar.length > 0 && (
                     <Badge badgeContent={radar.length} color="error">
                         <Chip

@@ -7,6 +7,8 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.funnel import FunnelStage, FunnelCard
+from app.models.product import Product
+from app.core.constants import MIN_SCORE_TEST
 from app.api.response import ResponseBuilder
 from app.api.audit_log import record_audit
 
@@ -183,6 +185,72 @@ def create_card(
         data={"id": card.id, "title": card.title},
         message="Card criado.",
         status_code=201,
+    )
+
+
+@router.post("/auto-populate")
+def auto_populate(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    first_stage = (
+        db.query(FunnelStage)
+        .filter(FunnelStage.is_active == True)
+        .order_by(FunnelStage.position)
+        .first()
+    )
+    if not first_stage:
+        return ResponseBuilder.error(message="Nenhuma etapa do funil encontrada. Crie as etapas primeiro.")
+
+    already_linked_ids = {
+        row[0]
+        for row in db.query(FunnelCard.product_id)
+        .filter(
+            FunnelCard.user_id == current_user.id,
+            FunnelCard.is_active == True,
+            FunnelCard.product_id.isnot(None),
+        )
+        .all()
+    }
+
+    candidates = (
+        db.query(Product)
+        .filter(Product.is_active == True, Product.score >= MIN_SCORE_TEST)
+        .order_by(Product.score.desc())
+        .limit(30)
+        .all()
+    )
+
+    created = []
+    for product in candidates:
+        if product.id in already_linked_ids:
+            continue
+
+        card = FunnelCard(
+            stage_id=first_stage.id,
+            product_id=product.id,
+            user_id=current_user.id,
+            title=product.name,
+            description=f"Card criado automaticamente pela IA (score {product.score}).",
+            priority="HIGH" if product.score >= 80 else "MEDIUM",
+            estimated_revenue=float(product.price) * float(product.commission) / 100,
+            channel="",
+            notes="Origem: sincronização automática com IA.",
+        )
+        db.add(card)
+        created.append(card)
+
+    db.commit()
+
+    for card in created:
+        record_audit(
+            db, current_user.id, "funnel_card", "CREATE", card.id,
+            f"Card '{card.title}' criado automaticamente pela sincronização com IA",
+        )
+
+    return ResponseBuilder.success(
+        data={"created": len(created)},
+        message=f"{len(created)} card(s) criado(s) automaticamente a partir de produtos com bom desempenho.",
     )
 
 

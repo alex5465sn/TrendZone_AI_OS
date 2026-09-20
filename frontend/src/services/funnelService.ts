@@ -53,3 +53,7 @@ export async function deleteCard(cardId: number) {
 export async function getRadar() {
     return getData<any[]>("/funnel/radar");
 }
+
+export async function autoPopulate() {
+    return postData<{ created: number }, {}>("/funnel/auto-populate", {});
+}
