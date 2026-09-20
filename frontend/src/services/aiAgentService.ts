@@ -10,6 +10,13 @@ export interface AIAgentConfig {
     providers_disponiveis: string[];
 }
 
+export const PROVIDER_MODELS: Record<string, string[]> = {
+    abacus: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet"],
+    openrouter: ["openai/gpt-4o-mini", "openai/gpt-4-turbo", "anthropic/claude-3-opus"],
+    openai: ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+    anthropic: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+};
+
 export async function getAIAgentConfig() {
     return getData<AIAgentConfig>("/ai-agent/config");
 }

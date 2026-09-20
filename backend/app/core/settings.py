@@ -60,17 +60,15 @@ class Settings(BaseSettings):
     FACEBOOK_PAGE_TOKEN: str = ""
 
     #################################
-    # WHATSAPP (WAHA)
-    #################################
+    # ABACUS AI
+    ABACUS_API_KEY: str = ""
 
+    # WHATSAPP (WAHA)
     WAHA_URL: str = "http://localhost:3000"
 
     WAHA_API_KEY: str = ""
 
-    #################################
-    # IA (AGENTE)
-    #################################
-
+    # AI PROVIDERS
     OPENROUTER_API_KEY: str = ""
 
     OPENROUTER_MODEL: str = "openai/gpt-4o-mini"

@@ -14,14 +14,14 @@ router = APIRouter(
     tags=["AI Agent"],
 )
 
-PROVIDERS = ["openrouter", "openai", "anthropic"]
+PROVIDERS = ["abacus", "openrouter", "openai", "anthropic"]
 
 
 class AIAgentConfigUpdate(Schema):
     is_enabled: bool = False
     auto_reply_whatsapp: bool = False
-    provider: str = "openrouter"
-    model_name: str = "openai/gpt-4o-mini"
+    provider: str = "abacus"
+    model_name: str = "gpt-4o"
     system_prompt: str = "Você é um assistente de vendas do TrendZone. Responda de forma curta, simpática e objetiva, ajudando o cliente a decidir a compra do produto anunciado."
 
 

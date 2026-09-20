@@ -14,6 +14,8 @@ from app.core.settings import settings
 
 
 def is_provider_configured(provider: str) -> bool:
+    if provider == "abacus":
+        return bool(settings.ABACUS_API_KEY)
     if provider == "openrouter":
         return bool(settings.OPENROUTER_API_KEY)
     if provider == "openai":
@@ -41,6 +43,8 @@ def generate_reply(
         messages.append(item)
     messages.append({"role": "user", "content": user_message})
 
+    if provider == "abacus":
+        return _call_abacus(model_name, messages)
     if provider == "openrouter":
         return _call_openrouter(model_name, messages)
     if provider == "openai":
@@ -114,6 +118,26 @@ def _call_anthropic(model_name: str, messages: list[dict]) -> dict:
             return {"ok": False, "error": f"Anthropic retornou {resp.status_code}: {resp.text[:300]}"}
         data = resp.json()
         reply = data["content"][0]["text"]
+        return {"ok": True, "reply": reply}
+    except (requests.RequestException, KeyError, IndexError) as e:
+        return {"ok": False, "error": str(e)}
+
+
+def _call_abacus(model_name: str, messages: list[dict]) -> dict:
+    try:
+        resp = requests.post(
+            "https://api.routellm.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {settings.ABACUS_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"model": model_name, "messages": messages},
+            timeout=30,
+        )
+        if not resp.ok:
+            return {"ok": False, "error": f"Abacus.AI retornou {resp.status_code}: {resp.text[:300]}"}
+        data = resp.json()
+        reply = data["choices"][0]["message"]["content"]
         return {"ok": True, "reply": reply}
     except (requests.RequestException, KeyError, IndexError) as e:
         return {"ok": False, "error": str(e)}

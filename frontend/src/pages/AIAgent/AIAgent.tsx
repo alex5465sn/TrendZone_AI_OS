@@ -24,6 +24,7 @@ import {
     getAIAgentConfig,
     updateAIAgentConfig,
     testAIAgent,
+    PROVIDER_MODELS,
     type AIAgentConfig as AIAgentConfigType,
 } from "../../services/aiAgentService";
 
@@ -143,7 +144,11 @@ export default function AIAgent() {
                                 fullWidth
                                 label="Provedor de IA"
                                 value={form.provider}
-                                onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                                onChange={(e) => {
+                                    const newProvider = e.target.value;
+                                    const defaultModel = (PROVIDER_MODELS[newProvider] || [""])[0];
+                                    setForm({ ...form, provider: newProvider, model_name: defaultModel });
+                                }}
                                 InputLabelProps={{ sx: { color: "#94A3B8" } }}
                                 InputProps={{ sx: { color: "#F8FAFC" } }}
                             >
@@ -154,13 +159,18 @@ export default function AIAgent() {
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
+                                select
                                 fullWidth
                                 label="Modelo"
                                 value={form.model_name}
                                 onChange={(e) => setForm({ ...form, model_name: e.target.value })}
                                 InputLabelProps={{ sx: { color: "#94A3B8" } }}
                                 InputProps={{ sx: { color: "#F8FAFC" } }}
-                            />
+                            >
+                                {(PROVIDER_MODELS[form.provider] || []).map((m) => (
+                                    <MenuItem key={m} value={m}>{m}</MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
 
                         <Grid item xs={12}>

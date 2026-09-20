@@ -37,12 +37,12 @@ class AIAgentConfig(BaseModel):
 
     provider: Mapped[str] = mapped_column(
         String(30),
-        default="openrouter",
+        default="abacus",
     )
 
     model_name: Mapped[str] = mapped_column(
         String(100),
-        default="openai/gpt-4o-mini",
+        default="gpt-4o",
     )
 
     system_prompt: Mapped[str] = mapped_column(
