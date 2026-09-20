@@ -21,6 +21,7 @@ import {
     searchShopeeProducts,
     type ShopeeProductNode,
 } from "../../services/marketplaceService";
+import { createProduct } from "../../services/productService";
 
 const categories = [
     "Eletrônicos",
@@ -88,10 +89,33 @@ export default function Products() {
 
     }
 
-    function handleAdd(product: ShopeeProductNode) {
+    async function handleAdd(product: ShopeeProductNode) {
 
-        console.log("Adicionar ao tracker:", product);
-        alert(`Produto "${product.productName}" adicionado ao tracker. (integração com banco em desenvolvimento)`);
+        try {
+
+            await createProduct({
+                item_id: product.itemId,
+                shop_id: product.shopId,
+                name: product.productName,
+                price: Number(product.price),
+                commission: Number(product.commissionRate) * 100,
+                image: product.imageUrl,
+                offer_link: product.offerLink,
+                rating: Number(product.ratingStar) || 0,
+                sales: Number(product.sales) || 0,
+            });
+
+            alert(`✓ Produto "${product.productName}" adicionado ao tracker!`);
+
+        } catch (err: any) {
+
+            if (err?.response?.status === 409) {
+                alert(`Produto "${product.productName}" já está rastreado.`);
+            } else {
+                alert("Erro ao adicionar produto ao tracker.");
+            }
+
+        }
 
     }
 

@@ -388,6 +388,8 @@ export default function Scout() {
                 commission: Number(product.commissionRate) * 100,
                 image: product.imageUrl,
                 offer_link: product.offerLink,
+                rating: Number(product.ratingStar) || 0,
+                sales: Number(product.sales) || 0,
             });
 
             alert(`✓ Produto "${product.productName}" adicionado ao tracker!`);

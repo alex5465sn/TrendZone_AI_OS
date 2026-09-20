@@ -29,6 +29,8 @@ export interface ProductCreate {
     commission: number;
     image: string;
     offer_link: string;
+    rating?: number;
+    sales?: number;
 }
 
 export interface ProductUpdate {

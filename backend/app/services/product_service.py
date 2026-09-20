@@ -25,6 +25,8 @@ from app.schemas.product import (
 
 from app.services.base_service import BaseService
 
+from app.services.product_score import ProductScore
+
 from app.core.exceptions import (
     ProductAlreadyExists,
     ProductNotFound,
@@ -63,6 +65,12 @@ class ProductService(BaseService):
 
             raise ProductAlreadyExists()
 
+        score = ProductScore.calculate(
+            commission=float(data.commission),
+            rating=data.rating,
+            sales=data.sales,
+        )
+
         product = Product(
 
             item_id=data.item_id,
@@ -78,6 +86,12 @@ class ProductService(BaseService):
             price=data.price,
 
             commission=data.commission,
+
+            rating=data.rating,
+
+            sales=data.sales,
+
+            score=score,
 
         )
 

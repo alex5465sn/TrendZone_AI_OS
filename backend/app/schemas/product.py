@@ -56,6 +56,17 @@ class ProductCreate(BaseModel):
 
     offer_link: str = ""
 
+    rating: float = Field(
+        default=0.0,
+        ge=0,
+        le=5,
+    )
+
+    sales: int = Field(
+        default=0,
+        ge=0,
+    )
+
 
 # =====================================================
 # UPDATE
