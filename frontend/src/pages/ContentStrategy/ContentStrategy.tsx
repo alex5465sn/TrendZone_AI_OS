@@ -12,6 +12,7 @@ import {
     DialogContent,
     DialogActions,
     TextField,
+    MenuItem,
     Snackbar,
     IconButton,
     Accordion,
@@ -31,6 +32,7 @@ import {
     deleteStrategy,
     type ContentStrategyItem,
 } from "../../services/contentStrategyService";
+import { getProducts, type Product } from "../../services/productService";
 
 const platformLabels: Record<string, string> = {
     shopee_video: "Shopee Vídeo",
@@ -69,6 +71,18 @@ export default function ContentStrategyPage() {
     const [genPlatforms, setGenPlatforms] = useState<string[]>(["shopee_video", "pinterest", "whatsapp"]);
     const [generating, setGenerating] = useState(false);
     const [filterPlatform, setFilterPlatform] = useState("");
+    const [products, setProducts] = useState<Product[]>([]);
+
+    async function openGenDialog(productId?: number) {
+        try {
+            const list = await getProducts();
+            setProducts(list);
+            setGenProductId(productId ? String(productId) : (list[0] ? String(list[0].id) : ""));
+        } catch {
+            setProducts([]);
+        }
+        setGenDialog(true);
+    }
 
     async function load() {
         try {
@@ -131,7 +145,7 @@ export default function ContentStrategyPage() {
                 <Button
                     variant="contained"
                     startIcon={<AutoAwesomeIcon />}
-                    onClick={() => setGenDialog(true)}
+                    onClick={() => openGenDialog()}
                     sx={{ backgroundColor: "#F97316", "&:hover": { backgroundColor: "#EA580C" } }}
                 >
                     Gerar Estratégias
@@ -227,15 +241,19 @@ export default function ContentStrategyPage() {
                 <DialogTitle>Gerar Estratégias de Conteúdo</DialogTitle>
                 <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
                     <TextField
-                        label="ID do Produto"
-                        type="number"
+                        select
+                        label="Produto"
                         value={genProductId}
                         onChange={(e) => setGenProductId(e.target.value)}
                         fullWidth
                         InputLabelProps={{ sx: { color: "#94A3B8" } }}
                         InputProps={{ sx: { color: "#F8FAFC" } }}
-                        helperText="Informe o ID do produto para gerar estratégias"
-                    />
+                        helperText={products.length === 0 ? "Nenhum produto rastreado ainda." : "Selecione o produto para gerar estratégias"}
+                    >
+                        {products.map((p) => (
+                            <MenuItem key={p.id} value={String(p.id)}>{p.name}</MenuItem>
+                        ))}
+                    </TextField>
                     <Typography variant="body2" color="#94A3B8">Plataformas:</Typography>
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                         {Object.entries(platformLabels).map(([key, label]) => (
