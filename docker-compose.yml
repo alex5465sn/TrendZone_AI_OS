@@ -4,9 +4,12 @@ services:
   waha:
     image: devlikeapro/waha:latest
     container_name: trendzone_waha
+    env_file:
+      - .env
     environment:
       WHATSAPP_DEFAULT_ENGINE: WEBJS
       WAHA_PRINT_QR: "false"
+      WAHA_API_KEY: ${WAHA_API_KEY}
     volumes:
       - ./waha_sessions:/app/.sessions
     ports:
