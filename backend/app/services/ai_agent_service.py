@@ -13,6 +13,18 @@ import requests
 from app.core.settings import settings
 
 
+PROVIDER_LABELS = {
+    "abacus": "Abacus.AI",
+    "openrouter": "OpenRouter",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+}
+
+
+def provider_label(provider: str) -> str:
+    return PROVIDER_LABELS.get(provider, provider)
+
+
 def is_provider_configured(provider: str) -> bool:
     if provider == "abacus":
         return bool(settings.ABACUS_API_KEY)
@@ -35,7 +47,7 @@ def generate_reply(
     if not is_provider_configured(provider):
         return {
             "ok": False,
-            "error": f"Provedor '{provider}' sem chave de API configurada no .env do servidor.",
+            "error": f"Provedor '{provider_label(provider)}' sem chave de API configurada no .env do servidor.",
         }
 
     messages = [{"role": "system", "content": system_prompt}]

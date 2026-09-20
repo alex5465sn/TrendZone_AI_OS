@@ -25,6 +25,7 @@ import {
     updateAIAgentConfig,
     testAIAgent,
     PROVIDER_MODELS,
+    PROVIDER_LABELS,
     type AIAgentConfig as AIAgentConfigType,
 } from "../../services/aiAgentService";
 
@@ -105,7 +106,7 @@ export default function AIAgent() {
 
             {!form.provider_configured && (
                 <Alert severity="warning" sx={{ mb: 3 }}>
-                    O provedor selecionado (<b>{form.provider}</b>) ainda não tem uma chave de API configurada no servidor (.env).
+                    O provedor selecionado (<b>{PROVIDER_LABELS[form.provider] || form.provider}</b>) ainda não tem uma chave de API configurada no servidor (.env).
                     O agente não vai gerar respostas até que uma chave válida seja adicionada (OPENROUTER_API_KEY, OPENAI_API_KEY ou ANTHROPIC_API_KEY).
                 </Alert>
             )}
@@ -153,7 +154,7 @@ export default function AIAgent() {
                                 InputProps={{ sx: { color: "#F8FAFC" } }}
                             >
                                 {form.providers_disponiveis.map((p) => (
-                                    <MenuItem key={p} value={p}>{p}</MenuItem>
+                                    <MenuItem key={p} value={p}>{PROVIDER_LABELS[p] || p}</MenuItem>
                                 ))}
                             </TextField>
                         </Grid>

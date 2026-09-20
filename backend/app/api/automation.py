@@ -355,7 +355,7 @@ def ai_run_automation(
 
     if not ai_agent_service.is_provider_configured(config.provider):
         return ResponseBuilder.error(
-            message=f"Provedor de IA '{config.provider}' sem chave de API configurada. Configure em Agente de IA."
+            message=f"Provedor de IA '{ai_agent_service.provider_label(config.provider)}' sem chave de API configurada. Configure em Agente de IA."
         )
 
     now = datetime.utcnow()
