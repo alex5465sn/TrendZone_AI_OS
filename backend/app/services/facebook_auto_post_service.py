@@ -54,7 +54,7 @@ def run_daily_auto_schedule() -> int:
 
             post = ScheduledPost(
                 product_item_id=product.item_id,
-                message=f"{content['caption']}\n\n{' '.join(content['hashtags'])}",
+                message=f"{content['caption']}\n\n{content['hashtags']}",
                 link=product.offer_link or "",
                 image_url=product.image or "",
                 scheduled_at=scheduled_at,
