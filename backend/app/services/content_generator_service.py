@@ -33,6 +33,13 @@ class ContentGeneratorService(BaseService):
         "💥 Promoção relâmpago",
         "✨ Queridinho da galera",
         "🎯 Custo-benefício absurdo",
+        "🚨 Preço despencou agora",
+        "💸 Tá quase de graça",
+        "😱 Não acreditei nesse preço",
+        "🏷️ Achado da Shopee",
+        "⏰ Só até acabar o estoque",
+        "🎁 Dica do dia pra economizar",
+        "🔎 Garimpo de hoje",
     ]
 
     _CTA = [
@@ -41,6 +48,21 @@ class ContentGeneratorService(BaseService):
         "Link direto na bio/comentário.",
         "Aproveite enquanto o preço está assim.",
         "Poucas unidades, não perde essa!",
+        "Já garanti o meu. E você?",
+        "Salva esse post pra não perder!",
+        "Marca aqui quem precisa ver isso 👇",
+        "Comenta 'EU QUERO' pra receber o link!",
+        "Tá esperando o quê? Clica no link!",
+        "Compartilha com quem ama uma promoção 🔥",
+    ]
+
+    _STORYTELLING = [
+        "Eu testei e aprovei — olha esse preço:",
+        "Uma seguidora me indicou e eu fui conferir:",
+        "Vocês pediram dicas de economia? Achei esse:",
+        "Tava procurando algo bom e barato e olha o que encontrei:",
+        "Esse aqui é daqueles que some rápido do estoque:",
+        "Não é jabá, é ACHADO mesmo:",
     ]
 
     _CHANNELS = [
@@ -48,6 +70,8 @@ class ContentGeneratorService(BaseService):
         "Canal de cupons no Telegram",
         "Comunidade de achadinhos no Facebook",
         "Stories/Reels no Instagram",
+        "Status do WhatsApp",
+        "Feed do Instagram",
         "Grupo de promoções relâmpago",
     ]
 
@@ -73,17 +97,25 @@ class ContentGeneratorService(BaseService):
 
         hook = random.choice(cls._HOOKS)
         cta = random.choice(cls._CTA)
+        story = random.choice(cls._STORYTELLING)
         channel = cls._suggest_channel(product)
 
         title = f"{hook}: {name}"
 
-        caption = (
-            f"{hook}!\n\n"
-            f"{name}\n"
-            f"💰 De olho no preço: R$ {price:.2f}\n"
-            f"⭐ Avaliação: {rating:.1f} | 🛒 {sales} vendas\n\n"
-            f"{cta}"
-        )
+        use_story = random.random() < 0.5
+        opener = f"{story}\n\n" if use_story else f"{hook}!\n\n"
+
+        stars = "⭐" * max(1, min(5, round(rating)))
+        social_proof = f" | 🛒 {sales:,} vendas" if sales > 0 else ""
+        price_line = f"💰 R$ {price:.2f}" if price > 0 else ""
+        rating_line = f"{stars} {rating:.1f}{social_proof}" if rating > 0 else ""
+
+        caption = opener + f"📦 {name}\n"
+        if price_line:
+            caption += f"{price_line}\n"
+        if rating_line:
+            caption += f"{rating_line}\n"
+        caption += f"\n{cta}"
 
         hashtags = cls._build_hashtags(name)
 
@@ -116,11 +148,16 @@ class ContentGeneratorService(BaseService):
             if len(w) > 3
         ][:3]
 
-        base = ["#promocao", "#achadinhos", "#oferta", "#shopee"]
-
+        base = ["#achadinhos", "#oferta", "#shopee", "#promocao"]
+        engagement = random.sample([
+            "#dicadeeconomia", "#garimpo", "#ofertadodia",
+            "#cupomshopee", "#compraonline", "#preçobaixo",
+            "#economiainteligente", "#desconto", "#ficadica",
+            "#trendzone", "#achado",
+        ], k=3)
         extra = [f"#{w}" for w in words]
 
-        return " ".join(base + extra)
+        return " ".join(base + engagement + extra)
 
     # =====================================================
     # PÚBLICO-ALVO

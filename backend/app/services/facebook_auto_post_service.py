@@ -18,7 +18,7 @@ from app.services.content_generator_service import ContentGeneratorService
 
 logger = logging.getLogger("trendzone")
 
-PEAK_HOURS = [12, 18, 21]
+PEAK_HOURS = [7, 9, 12, 16, 19]
 PRODUCTS_PER_DAY = len(PEAK_HOURS)
 
 
