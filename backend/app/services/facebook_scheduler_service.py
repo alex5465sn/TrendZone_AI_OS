@@ -13,10 +13,12 @@ from datetime import datetime
 from app.database.session import SessionLocal
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.integrations.facebook.facebook_client import FacebookClient
+from app.services.facebook_auto_post_service import run_daily_auto_schedule
 
 logger = logging.getLogger("trendzone")
 
 CHECK_INTERVAL_SECONDS = 60
+AUTO_SCHEDULE_INTERVAL_CYCLES = 60
 
 
 class FacebookSchedulerService:
@@ -30,6 +32,10 @@ class FacebookSchedulerService:
             return
         cls._running = True
         cls._task = asyncio.create_task(cls._loop())
+        try:
+            run_daily_auto_schedule()
+        except Exception as e:
+            logger.warning(f"[FB_SCHEDULER] Erro no agendamento automatico inicial: {e}")
         logger.info("[FB_SCHEDULER] Servico iniciado.")
 
     @classmethod
@@ -41,9 +47,13 @@ class FacebookSchedulerService:
 
     @classmethod
     async def _loop(cls):
+        cycle = 0
         while cls._running:
             try:
                 cls._run_check()
+                cycle += 1
+                if cycle % AUTO_SCHEDULE_INTERVAL_CYCLES == 0:
+                    run_daily_auto_schedule()
             except Exception as e:
                 logger.warning(f"[FB_SCHEDULER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)

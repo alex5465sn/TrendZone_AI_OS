@@ -6,8 +6,13 @@ export interface FacebookPostRequest {
     image_url?: string;
 }
 
-export async function getFacebookStatus(): Promise<{ configured: boolean }> {
+export async function getFacebookStatus(): Promise<{ configured: boolean; peak_hours: number[] }> {
     const response = await api.get("/facebook/status");
+    return response.data.data;
+}
+
+export async function runAutoSchedule(): Promise<{ created: number }> {
+    const response = await api.post("/facebook/auto-schedule/run", {});
     return response.data.data;
 }
 

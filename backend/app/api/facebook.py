@@ -17,6 +17,7 @@ from app.integrations.facebook.facebook_client import (
     FacebookAPIError,
 )
 from app.services.video_generator import generate_product_video, VideoGenerationError, MEDIA_DIR
+from app.services.facebook_auto_post_service import run_daily_auto_schedule, PEAK_HOURS
 
 router = APIRouter(
     prefix="/facebook",
@@ -45,7 +46,16 @@ class PostVideoRequest(BaseModel):
 @router.get("/status")
 def status(current_user: User = Depends(get_current_user)):
     client = FacebookClient()
-    return ResponseBuilder.success(data={"configured": client.is_configured()})
+    return ResponseBuilder.success(data={"configured": client.is_configured(), "peak_hours": PEAK_HOURS})
+
+
+@router.post("/auto-schedule/run")
+def force_auto_schedule(current_user: User = Depends(get_current_user)):
+    created = run_daily_auto_schedule()
+    return ResponseBuilder.success(
+        data={"created": created},
+        message=f"{created} post(s) agendado(s) para os horarios de pico." if created else "Ja havia posts agendados para hoje ou nenhum produto disponivel.",
+    )
 
 
 @router.post("/post")
