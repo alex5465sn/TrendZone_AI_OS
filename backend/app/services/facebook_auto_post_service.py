@@ -7,16 +7,14 @@ publicação nos horários de pico definidos, sem intervenção manual.
 O FacebookSchedulerService (já existente) publica quando chega a hora.
 """
 
-import logging
 from datetime import datetime, timedelta
 
+from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.repositories.product_repository import ProductRepository
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.models.scheduled_post import ScheduledPost
 from app.services.content_generator_service import ContentGeneratorService
-
-logger = logging.getLogger("trendzone")
 
 PEAK_HOURS = [7, 9, 12, 16, 19]
 PRODUCTS_PER_DAY = len(PEAK_HOURS)

@@ -7,15 +7,13 @@ ou vídeo) na página do Facebook.
 """
 
 import asyncio
-import logging
 from datetime import datetime
 
+from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.integrations.facebook.facebook_client import FacebookClient
 from app.services.facebook_auto_post_service import run_daily_auto_schedule
-
-logger = logging.getLogger("trendzone")
 
 CHECK_INTERVAL_SECONDS = 60
 AUTO_SCHEDULE_INTERVAL_CYCLES = 60
