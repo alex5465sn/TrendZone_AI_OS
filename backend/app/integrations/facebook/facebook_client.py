@@ -43,9 +43,12 @@ class FacebookClient:
 
         if image_url:
             url = f"{GRAPH_API_BASE}/{self.page_id}/photos"
+            caption = message
+            if link and link not in message:
+                caption = f"{message}\n\n🔗 {link}"
             payload = {
                 "url": image_url,
-                "caption": message,
+                "caption": caption,
                 "access_token": self.page_token,
             }
         else:
