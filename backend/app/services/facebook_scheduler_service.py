@@ -12,8 +12,10 @@ from datetime import datetime
 from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
+from app.repositories.product_repository import ProductRepository
 from app.integrations.facebook.facebook_client import FacebookClient
 from app.services.facebook_auto_post_service import run_daily_auto_schedule
+from app.services.notification_service import send_push_notification
 
 CHECK_INTERVAL_SECONDS = 60
 AUTO_SCHEDULE_INTERVAL_CYCLES = 60
@@ -79,10 +81,22 @@ class FacebookSchedulerService:
                     post.status = "publicado"
                     post.error_message = ""
                     logger.info(f"[FB_SCHEDULER] Post agendado #{post.id} publicado com sucesso.")
+
+                    product = ProductRepository.get_by_item_id(db, post.product_item_id)
+                    nome_produto = product.name if product else f"produto #{post.product_item_id}"
+                    send_push_notification(
+                        title="✅ Post publicado no Facebook",
+                        message=f"{nome_produto} foi publicado com sucesso na sua pagina.",
+                    )
                 except Exception as e:
                     post.status = "erro"
                     post.error_message = str(e)[:500]
                     logger.warning(f"[FB_SCHEDULER] Falha ao publicar post agendado #{post.id}: {e}")
+                    send_push_notification(
+                        title="❌ Falha ao publicar post",
+                        message=f"Post #{post.id} nao pode ser publicado: {str(e)[:150]}",
+                        tags="warning",
+                    )
 
                 ScheduledPostRepository.update(db, post)
         finally:

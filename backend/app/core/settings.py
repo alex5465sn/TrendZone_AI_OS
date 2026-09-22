@@ -59,6 +59,8 @@ class Settings(BaseSettings):
 
     FACEBOOK_PAGE_TOKEN: str = ""
 
+    NTFY_TOPIC: str = ""
+
     #################################
     # ABACUS AI
     ABACUS_API_KEY: str = ""
