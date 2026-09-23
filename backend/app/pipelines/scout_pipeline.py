@@ -30,10 +30,6 @@ from app.services.decision_engine import (
     DecisionEngine,
 )
 
-from app.services.ranking_engine import (
-    RankingEngine,
-)
-
 from app.services.persistence_service import (
     PersistenceService,
 )
@@ -138,7 +134,7 @@ class ScoutPipeline:
 
             )
 
-        RankingEngine.rank(products)
+        products.sort(key=lambda p: p.score, reverse=True)
 
         PersistenceService.save_products(
 
