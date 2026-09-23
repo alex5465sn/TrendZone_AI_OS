@@ -45,6 +45,16 @@ class DivulgationGroupRequest(BaseModel):
     member_count: int = 0
 
 
+class DivulgationGroupUpdateRequest(BaseModel):
+    name: str | None = None
+    platform: str | None = None
+    category: str | None = None
+    description: str | None = None
+    link: str | None = None
+    best_time: str | None = None
+    member_count: int | None = None
+
+
 class GenerateTextRequest(BaseModel):
     product_id: int
     tone: str = "oferta"
@@ -91,6 +101,36 @@ def create_group(
     )
     DivulgationGroupRepository.create(db, group)
     return ResponseBuilder.success(data={"id": group.id}, message="Grupo cadastrado com sucesso.")
+
+
+@router.put("/{group_id}")
+def update_group(
+    group_id: int,
+    payload: DivulgationGroupUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    group = DivulgationGroupRepository.get_by_id(db, group_id)
+    if not group:
+        return ResponseBuilder.error(message="Grupo não encontrado.", status_code=404)
+
+    if payload.name is not None:
+        group.name = payload.name
+    if payload.platform is not None:
+        group.platform = payload.platform
+    if payload.category is not None:
+        group.category = payload.category
+    if payload.description is not None:
+        group.description = payload.description
+    if payload.link is not None:
+        group.link = payload.link
+    if payload.best_time is not None:
+        group.best_time = payload.best_time
+    if payload.member_count is not None:
+        group.member_count = payload.member_count
+
+    DivulgationGroupRepository.update(db, group)
+    return ResponseBuilder.success(data=_serialize(group), message="Grupo atualizado com sucesso.")
 
 
 @router.delete("/{group_id}")

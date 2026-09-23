@@ -43,6 +43,11 @@ export async function createDivulgationGroup(payload: DivulgationGroupRequest): 
     return response.data.data;
 }
 
+export async function updateDivulgationGroup(id: number, payload: Partial<DivulgationGroupRequest>): Promise<DivulgationGroup> {
+    const response = await api.put(`/divulgation-groups/${id}`, payload);
+    return response.data.data;
+}
+
 export async function deleteDivulgationGroup(id: number): Promise<void> {
     await api.delete(`/divulgation-groups/${id}`);
 }

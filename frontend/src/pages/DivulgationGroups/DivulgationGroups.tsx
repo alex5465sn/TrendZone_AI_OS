@@ -27,6 +27,7 @@ import {
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
@@ -37,6 +38,7 @@ import { getProducts, type Product } from "../../services/productService";
 import {
     listDivulgationGroups,
     createDivulgationGroup,
+    updateDivulgationGroup,
     deleteDivulgationGroup,
     generateDivulgationText,
     type DivulgationGroup,
@@ -72,6 +74,7 @@ export default function DivulgationGroups() {
     const [search, setSearch] = useState("");
 
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState({
         name: "",
         platform: "whatsapp",
@@ -80,6 +83,25 @@ export default function DivulgationGroups() {
         best_time: "",
         member_count: "0",
     });
+
+    function openCreateDialog() {
+        setEditingId(null);
+        setForm({ name: "", platform: "whatsapp", category: "achadinhos", link: "", best_time: "", member_count: "0" });
+        setDialogOpen(true);
+    }
+
+    function openEditDialog(g: DivulgationGroup) {
+        setEditingId(g.id);
+        setForm({
+            name: g.name,
+            platform: g.platform,
+            category: g.category,
+            link: g.link || "",
+            best_time: g.best_time || "",
+            member_count: String(g.member_count || 0),
+        });
+        setDialogOpen(true);
+    }
 
     async function load() {
         try {
@@ -123,23 +145,30 @@ export default function DivulgationGroups() {
         }
     }
 
-    async function handleCreateGroup() {
+    async function handleSaveGroup() {
         if (!form.name) return;
+        const payload = {
+            name: form.name,
+            platform: form.platform,
+            category: form.category,
+            link: form.link,
+            best_time: form.best_time,
+            member_count: Number(form.member_count) || 0,
+        };
         try {
-            await createDivulgationGroup({
-                name: form.name,
-                platform: form.platform,
-                category: form.category,
-                link: form.link,
-                best_time: form.best_time,
-                member_count: Number(form.member_count) || 0,
-            });
+            if (editingId) {
+                await updateDivulgationGroup(editingId, payload);
+                setToast("Grupo atualizado!");
+            } else {
+                await createDivulgationGroup(payload);
+                setToast("Grupo cadastrado!");
+            }
             setDialogOpen(false);
+            setEditingId(null);
             setForm({ name: "", platform: "whatsapp", category: "achadinhos", link: "", best_time: "", member_count: "0" });
-            setToast("Grupo cadastrado!");
             load();
         } catch {
-            setError("Erro ao cadastrar grupo.");
+            setError(editingId ? "Erro ao atualizar grupo." : "Erro ao cadastrar grupo.");
         }
     }
 
@@ -168,7 +197,7 @@ export default function DivulgationGroups() {
                         Gere o texto com IA e publique manualmente nos seus grupos de WhatsApp e Facebook
                     </Typography>
                 </Box>
-                <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)} sx={{ borderColor: "#334155", color: "#94A3B8" }}>
+                <Button variant="outlined" startIcon={<AddIcon />} onClick={openCreateDialog} sx={{ borderColor: "#334155", color: "#94A3B8" }}>
                     Cadastrar Grupo
                 </Button>
             </Box>
@@ -286,9 +315,14 @@ export default function DivulgationGroups() {
                                                     )}
                                                     <Typography variant="body1" color="#F8FAFC" fontWeight={600}>{g.name}</Typography>
                                                 </Box>
-                                                <IconButton size="small" onClick={() => handleDeleteGroup(g.id)} sx={{ color: "#EF4444" }}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
+                                                <Box sx={{ display: "flex", gap: 0.5 }}>
+                                                    <IconButton size="small" onClick={() => openEditDialog(g)} sx={{ color: "#94A3B8" }}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton size="small" onClick={() => handleDeleteGroup(g.id)} sx={{ color: "#EF4444" }}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
                                             </Box>
                                             <Chip label={g.category} size="small" sx={{ mt: 1, height: 20, fontSize: 10, backgroundColor: "#1E293B", color: "#94A3B8" }} />
                                             {g.best_time && (
@@ -315,8 +349,8 @@ export default function DivulgationGroups() {
                 </>
             )}
 
-            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: "#0F172A", color: "#F8FAFC" } }}>
-                <DialogTitle>Cadastrar Grupo de Divulgação</DialogTitle>
+            <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setEditingId(null); }} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: "#0F172A", color: "#F8FAFC" } }}>
+                <DialogTitle>{editingId ? "Editar Grupo de Divulgação" : "Cadastrar Grupo de Divulgação"}</DialogTitle>
                 <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
                     <TextField label="Nome do grupo" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                     <TextField select label="Plataforma" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }}>
@@ -329,8 +363,8 @@ export default function DivulgationGroups() {
                     <TextField label="Nº de membros (opcional)" type="number" value={form.member_count} onChange={(e) => setForm({ ...form, member_count: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)} sx={{ color: "#94A3B8" }}>Cancelar</Button>
-                    <Button onClick={handleCreateGroup} variant="contained" sx={{ backgroundColor: "#2563EB" }}>Salvar</Button>
+                    <Button onClick={() => { setDialogOpen(false); setEditingId(null); }} sx={{ color: "#94A3B8" }}>Cancelar</Button>
+                    <Button onClick={handleSaveGroup} variant="contained" sx={{ backgroundColor: "#2563EB" }}>Salvar</Button>
                 </DialogActions>
             </Dialog>
 
