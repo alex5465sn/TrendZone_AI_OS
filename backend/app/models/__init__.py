@@ -40,6 +40,7 @@ from app.models.audit_log import AuditLog
 from app.models.niche_vocabulary import NicheVocabulary
 from app.models.whatsapp import WhatsAppConnection, WhatsAppMessage
 from app.models.ai_agent_config import AIAgentConfig
+from app.models.divulgation_group import DivulgationGroup
 
 __all__ = (
     "Product",
@@ -64,4 +65,5 @@ __all__ = (
     "WhatsAppConnection",
     "WhatsAppMessage",
     "AIAgentConfig",
+    "DivulgationGroup",
 )

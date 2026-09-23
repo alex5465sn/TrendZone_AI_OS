@@ -31,6 +31,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import TranslateIcon from "@mui/icons-material/Translate";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import PsychologyIcon from "@mui/icons-material/Psychology";
+import GroupsIcon from "@mui/icons-material/Groups";
 
 import { NavLink } from "react-router-dom";
 import { isAdmin } from "../../services/authService";
@@ -125,6 +126,12 @@ const baseMenu = [
         text: "Automações",
         icon: <BoltIcon />,
         path: "/automation",
+    },
+
+    {
+        text: "Grupos de Divulgação",
+        icon: <GroupsIcon />,
+        path: "/divulgation-groups",
     },
 
     {

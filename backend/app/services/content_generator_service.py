@@ -75,6 +75,45 @@ class ContentGeneratorService(BaseService):
         "Grupo de promoções relâmpago",
     ]
 
+    _TONES = {
+        "oferta": {
+            "hooks": _HOOKS,
+            "ctas": _CTA,
+        },
+        "storytelling": {
+            "hooks": _STORYTELLING,
+            "ctas": [
+                "Vale muito a pena, testa também!",
+                "Comenta aqui se você também ama um achado desses.",
+                "Salva pra não esquecer depois.",
+            ],
+        },
+        "humor": {
+            "hooks": [
+                "😂 Minha carteira não perdoou esse preço",
+                "🤡 Eu resistindo até ver esse preço",
+                "😅 Não é sorte, é Shopee",
+            ],
+            "ctas": [
+                "Corre antes que o povo limpe o estoque 🏃",
+                "Se não comprar hoje, amanhã já era 😭",
+                "Marca o amigo pão-duro que ama economizar 👇",
+            ],
+        },
+        "urgencia": {
+            "hooks": [
+                "🚨 ÚLTIMAS UNIDADES",
+                "⏳ Só até acabar o estoque",
+                "🔴 Preço volta a subir em breve",
+            ],
+            "ctas": [
+                "Não deixa pra depois, pode acabar!",
+                "Estoque limitado, corre lá!",
+                "Agora ou nunca — clica no link!",
+            ],
+        },
+    }
+
     # =====================================================
     # GERAÇÃO
     # =====================================================
@@ -83,10 +122,12 @@ class ContentGeneratorService(BaseService):
     def generate(
         cls,
         product: dict,
+        tone: str = "oferta",
     ) -> dict:
 
         cls.log_info(
-            f"Gerando conteúdo para produto {product.get('name', '')}..."
+            f"Gerando conteúdo para produto {product.get('name', '')} "
+            f"(tom={tone})..."
         )
 
         name = product.get("name", "Produto")
@@ -95,8 +136,9 @@ class ContentGeneratorService(BaseService):
         rating = product.get("rating", 0)
         sales = product.get("sales", 0)
 
-        hook = random.choice(cls._HOOKS)
-        cta = random.choice(cls._CTA)
+        tone_preset = cls._TONES.get(tone, cls._TONES["oferta"])
+        hook = random.choice(tone_preset["hooks"])
+        cta = random.choice(tone_preset["ctas"])
         story = random.choice(cls._STORYTELLING)
         channel = cls._suggest_channel(product)
 
@@ -130,6 +172,7 @@ class ContentGeneratorService(BaseService):
             "target_audience": audience,
             "channel": channel,
             "estimated_commission": commission,
+            "tone": tone,
         }
 
     # =====================================================

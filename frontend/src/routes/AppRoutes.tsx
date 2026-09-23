@@ -25,6 +25,7 @@ import FollowUps from "../pages/FollowUps/FollowUps";
 import Channels from "../pages/Channels/Channels";
 import Seasonal from "../pages/Seasonal/Seasonal";
 import Automation from "../pages/Automation/Automation";
+import DivulgationGroups from "../pages/DivulgationGroups/DivulgationGroups";
 import AuditLog from "../pages/AuditLog/AuditLog";
 import Vocabulary from "../pages/Vocabulary/Vocabulary";
 import WhatsApp from "../pages/WhatsApp/WhatsApp";
@@ -153,6 +154,11 @@ export default function AppRoutes() {
                                 <Route
                                     path="/automation"
                                     element={<Automation />}
+                                />
+
+                                <Route
+                                    path="/divulgation-groups"
+                                    element={<DivulgationGroups />}
                                 />
 
                                 <Route
