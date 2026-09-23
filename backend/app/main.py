@@ -50,6 +50,7 @@ from app.api.ai_agent import router as ai_agent_router
 
 from app.services.auto_publisher_service import AutoPublisherService
 from app.services.facebook_scheduler_service import FacebookSchedulerService
+from app.services.auto_scout_service import AutoScoutService
 from app.services.video_generator import MEDIA_DIR
 
 # ============================
@@ -79,11 +80,13 @@ async def lifespan(app: FastAPI):
 
     AutoPublisherService.start()
     FacebookSchedulerService.start()
+    AutoScoutService.start()
 
     yield
 
     AutoPublisherService.stop()
     FacebookSchedulerService.stop()
+    AutoScoutService.stop()
 
     print("\n========================================")
     print("Encerrando Backend...")

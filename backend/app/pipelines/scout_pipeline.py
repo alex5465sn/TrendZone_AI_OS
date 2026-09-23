@@ -42,6 +42,9 @@ from app.services.executive_report import (
     ExecutiveReport,
 )
 
+from app.models.product import Product
+from app.repositories.product_repository import ProductRepository
+
 
 class ScoutPipeline:
 
@@ -144,6 +147,61 @@ class ScoutPipeline:
             products,
 
         )
+
+        self._sync_to_products_table(products)
+
+        return self._build_reports(products)
+
+    # =====================================================
+    # SINCRONIZA COM A TABELA "products"
+    # =====================================================
+    # A tabela "trend_products" (PersistenceService) guarda o
+    # historico bruto do Scout. Porem, Oportunidades, Descoberta,
+    # Funil e Automacao leem da tabela "products". Sem este passo
+    # os produtos encontrados pelo Scout nunca alimentavam a IA.
+
+    def _sync_to_products_table(self, products) -> None:
+
+        for product in products:
+
+            existing = ProductRepository.get_by_item_id(
+                self.db,
+                product.item_id,
+            )
+
+            if existing:
+
+                existing.name = product.name
+                existing.image = product.image
+                existing.offer_link = product.offer_link
+                existing.price = product.price
+                existing.commission = product.commission
+                existing.rating = product.rating
+                existing.sales = product.sales
+                existing.score = product.score
+                existing.recommendation = product.decision
+
+                ProductRepository.update(self.db, existing)
+
+                continue
+
+            entity = Product(
+                item_id=product.item_id,
+                shop_id=product.shop_id,
+                name=product.name,
+                image=product.image,
+                offer_link=product.offer_link,
+                price=product.price,
+                commission=product.commission,
+                rating=product.rating,
+                sales=product.sales,
+                score=product.score,
+                recommendation=product.decision,
+            )
+
+            ProductRepository.create(self.db, entity)
+
+    def _build_reports(self, products):
 
         return [
 
