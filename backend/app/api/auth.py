@@ -15,8 +15,6 @@ from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     RefreshTokenRequest,
-    LoginResponse,
-    RegisterResponse,
     UserInfo,
 )
 from app.services.auth_service import AuthService

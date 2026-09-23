@@ -11,7 +11,6 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.core.security import decode_token
 from app.services.auth_service import AuthService
 from app.models.user import User
 

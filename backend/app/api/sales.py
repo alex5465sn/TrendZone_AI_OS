@@ -9,7 +9,7 @@ Rastreamento de vendas, comissoes e divulgacao.
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -17,7 +17,6 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.sale import Sale
-from app.models.campaign import Campaign
 from app.repositories.sale_repository import SaleRepository
 from app.repositories.campaign_repository import CampaignRepository
 from app.services.sales_tracker_service import SalesTrackerService

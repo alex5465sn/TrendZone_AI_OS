@@ -17,13 +17,8 @@ Cada verificacao retorna um dict com:
 import ast
 import os
 import re
-import importlib
-import traceback
-import logging
 from pathlib import Path
 from typing import Any
-
-logger = logging.getLogger("trendzone")
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = BACKEND_ROOT / "app"
@@ -151,9 +146,6 @@ class InspectorService:
             if model_file.name.startswith("_"):
                 continue
             module_name = model_file.stem
-            class_name = module_name.title().replace("_", "")
-            if module_name == "system_info":
-                class_name = "SystemInfo"
 
             if f"from app.models.{module_name}" not in init_content:
                 results.append({

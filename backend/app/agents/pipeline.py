@@ -13,7 +13,7 @@ conhecer diretamente os Agents.
 Ele apenas executa este Pipeline.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(slots=True)

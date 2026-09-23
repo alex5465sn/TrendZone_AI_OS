@@ -17,13 +17,7 @@ def get_current_user(
     db: Session = Depends(get_db),
 ):
 
-    print("=" * 60)
-    print(credentials)
-    print(credentials.credentials)
-    print("=" * 60)
-
     token = credentials.credentials
-
 
     try:
         payload = jwt.decode(

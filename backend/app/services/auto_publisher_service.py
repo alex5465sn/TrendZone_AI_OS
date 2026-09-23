@@ -15,9 +15,9 @@ na aba Oportunidades / Vendas & Comissoes.
 """
 
 import asyncio
-import logging
 from datetime import datetime, date
 
+from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.repositories.product_repository import ProductRepository
 from app.repositories.schedule_repository import ScheduleRepository
@@ -25,7 +25,6 @@ from app.repositories.campaign_repository import CampaignRepository
 from app.models.campaign import Campaign
 from app.services.opportunity_engine import OpportunityEngine
 
-logger = logging.getLogger("trendzone")
 
 CHECK_INTERVAL_SECONDS = 60
 

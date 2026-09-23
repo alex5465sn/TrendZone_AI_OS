@@ -9,14 +9,12 @@ para rastreamento de campanhas.
 """
 
 import time
-import logging
 from typing import Any
 
+from app.core.logger import logger
 from app.integrations.shopee.client import ShopeeClient
 from app.integrations.shopee.graphql.reports import CONVERSION_REPORT
 from app.integrations.shopee.graphql.links import GENERATE_SHORT_LINK
-
-logger = logging.getLogger("trendzone")
 
 
 class SalesTrackerService:
