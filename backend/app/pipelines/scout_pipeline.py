@@ -40,6 +40,7 @@ from app.services.executive_report import (
 
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
+from app.constants.categories import keyword_to_category
 
 
 class ScoutPipeline:
@@ -144,7 +145,7 @@ class ScoutPipeline:
 
         )
 
-        self._sync_to_products_table(products)
+        self._sync_to_products_table(products, keyword)
 
         return self._build_reports(products)
 
@@ -156,7 +157,9 @@ class ScoutPipeline:
     # Funil e Automacao leem da tabela "products". Sem este passo
     # os produtos encontrados pelo Scout nunca alimentavam a IA.
 
-    def _sync_to_products_table(self, products) -> None:
+    def _sync_to_products_table(self, products, keyword: str = "") -> None:
+
+        category = keyword_to_category(keyword)
 
         for product in products:
 
@@ -176,6 +179,7 @@ class ScoutPipeline:
                 existing.sales = product.sales
                 existing.score = product.score
                 existing.recommendation = product.decision
+                existing.category = category
 
                 ProductRepository.update(self.db, existing)
 
@@ -193,6 +197,7 @@ class ScoutPipeline:
                 sales=product.sales,
                 score=product.score,
                 recommendation=product.decision,
+                category=category,
             )
 
             ProductRepository.create(self.db, entity)

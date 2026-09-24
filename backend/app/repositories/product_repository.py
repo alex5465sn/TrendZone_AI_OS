@@ -46,6 +46,28 @@ class ProductRepository(BaseRepository[Product]):
         return db.execute(stmt).scalar_one_or_none()
 
     # =====================================================
+    # CATEGORY
+    # =====================================================
+
+    @classmethod
+    def get_by_category(
+        cls,
+        db: Session,
+        category: str,
+    ) -> list[Product]:
+
+        stmt = (
+            select(Product)
+            .where(
+                Product.category == category,
+                Product.is_active.is_(True),
+            )
+            .order_by(Product.score.desc())
+        )
+
+        return list(db.execute(stmt).scalars().all())
+
+    # =====================================================
     # SEARCH
     # =====================================================
 

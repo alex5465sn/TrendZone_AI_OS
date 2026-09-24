@@ -72,6 +72,7 @@ export default function ShopeeProductTable({
                 <TableHead>
 
                     <TableRow>
+                        <TableCell sx={{ color: "#94A3B8" }}>ID</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Produto</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Loja</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Preço</TableCell>
@@ -101,6 +102,18 @@ export default function ShopeeProductTable({
                                     },
                                 }}
                             >
+
+                                <TableCell>
+                                    <Chip
+                                        label={product.itemId}
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: "#1E293B",
+                                            color: "#94A3B8",
+                                            fontFamily: "monospace",
+                                        }}
+                                    />
+                                </TableCell>
 
                                 <TableCell>
                                     <Box

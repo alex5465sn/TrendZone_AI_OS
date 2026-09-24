@@ -77,6 +77,8 @@ class ProductService(BaseService):
 
             shop_id=data.shop_id,
 
+            category=data.category or "geral",
+
             name=data.name,
 
             image=data.image,
@@ -153,7 +155,11 @@ class ProductService(BaseService):
     def get_all(
         cls,
         db: Session,
+        category: str | None = None,
     ):
+
+        if category:
+            return ProductRepository.get_by_category(db, category)
 
         return ProductRepository.get_all(db)
 

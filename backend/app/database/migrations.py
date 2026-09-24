@@ -51,6 +51,9 @@ EXTRA_COLUMNS = {
     "sales": [
         ("user_id", "INTEGER NULL"),
     ],
+    "products": [
+        ("category", "VARCHAR(60) NOT NULL DEFAULT 'geral'"),
+    ],
 }
 
 

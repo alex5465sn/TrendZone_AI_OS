@@ -10,6 +10,7 @@ Endpoints oficiais da entidade Product.
 from fastapi import APIRouter
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.database import get_db
 
@@ -36,11 +37,13 @@ router = APIRouter(
 
 def get_products(
 
+    category: Optional[str] = None,
+
     db: Session = Depends(get_db),
 
 ):
 
-    products = ProductService.get_all(db)
+    products = ProductService.get_all(db, category=category)
 
     return ResponseBuilder.success(
 

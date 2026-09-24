@@ -18,21 +18,11 @@ import asyncio
 from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.services.scout_service import ScoutService
+from app.constants.categories import get_keyword_rotation
 
 CHECK_INTERVAL_SECONDS = 15 * 60
 
-KEYWORDS = [
-    "fone de ouvido", "carregador rapido", "power bank", "caixa de som bluetooth",
-    "organizador multiuso", "luminaria led", "utensilio de cozinha",
-    "kit skincare", "escova secadora", "perfume importado",
-    "brinquedo para cachorro", "comedouro automatico pet", "coleira para gato",
-    "suporte para celular", "smartwatch", "capa para celular",
-    "oculos de sol", "bolsa feminina", "relogio masculino",
-    "brinquedo educativo", "mochila infantil",
-    "faixa elastica", "garrafa de agua esportiva", "luva de treino",
-    "organizador de carro", "suporte veicular celular",
-    "caderno inteligente", "kit escritorio organizador",
-]
+KEYWORD_ROTATION = get_keyword_rotation()
 
 
 class AutoScoutService:
@@ -67,7 +57,7 @@ class AutoScoutService:
 
     @classmethod
     def _run_once(cls):
-        keyword = KEYWORDS[cls._index % len(KEYWORDS)]
+        category_id, keyword = KEYWORD_ROTATION[cls._index % len(KEYWORD_ROTATION)]
         cls._index += 1
 
         db = SessionLocal()
@@ -75,7 +65,8 @@ class AutoScoutService:
             reports = ScoutService(db).search_products(keyword=keyword, page=1, limit=10)
             db.commit()
             logger.info(
-                f"[AUTO_SCOUT] Palavra-chave '{keyword}': {len(reports)} produto(s) processado(s)."
+                f"[AUTO_SCOUT] Categoria '{category_id}' / palavra-chave '{keyword}': "
+                f"{len(reports)} produto(s) processado(s)."
             )
         except Exception as e:
             db.rollback()

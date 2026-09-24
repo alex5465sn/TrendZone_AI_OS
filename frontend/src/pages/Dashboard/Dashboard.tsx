@@ -17,6 +17,12 @@ import {
     CircularProgress,
     Alert,
     Button,
+    IconButton,
+    Menu,
+    MenuItem,
+    Checkbox,
+    FormControlLabel,
+    Tooltip,
 } from "@mui/material";
 
 import InventoryIcon from "@mui/icons-material/Inventory2";
@@ -25,6 +31,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import TuneIcon from "@mui/icons-material/Tune";
 
 import StatCard from "../../components/dashboard/StatCard";
 import HealthCard from "../../components/health/HealthCard";
@@ -35,6 +42,36 @@ import { searchShopeeProducts, type ShopeeProductNode } from "../../services/mar
 
 import { Link } from "react-router-dom";
 
+const WIDGETS = [
+    { id: "stat_products", label: "Produtos Rastreados" },
+    { id: "stat_pipeline", label: "Pipeline IA" },
+    { id: "stat_status", label: "Status do Sistema" },
+    { id: "stat_shopee", label: "Shopee API" },
+    { id: "products_table", label: "Produtos em Destaque" },
+    { id: "health", label: "Saúde do Sistema" },
+] as const;
+
+type WidgetId = (typeof WIDGETS)[number]["id"];
+
+const DASHBOARD_LAYOUT_KEY = "trendzone_dashboard_widgets";
+
+function loadWidgetPrefs(): Record<WidgetId, boolean> {
+
+    const defaults = Object.fromEntries(WIDGETS.map((w) => [w.id, true])) as Record<WidgetId, boolean>;
+
+    try {
+        const saved = localStorage.getItem(DASHBOARD_LAYOUT_KEY);
+        if (saved) {
+            return { ...defaults, ...JSON.parse(saved) };
+        }
+    } catch {
+        // Preferencia invalida no localStorage — usa o padrao.
+    }
+
+    return defaults;
+
+}
+
 export default function Dashboard() {
 
     const [dashboard, setDashboard] = useState<DashboardStats | null>(null);
@@ -44,6 +81,18 @@ export default function Dashboard() {
     const [productsLoading, setProductsLoading] = useState(false);
     const [productsError, setProductsError] = useState("");
     const [error, setError] = useState("");
+    const [widgetPrefs, setWidgetPrefs] = useState<Record<WidgetId, boolean>>(loadWidgetPrefs);
+    const [customizeAnchor, setCustomizeAnchor] = useState<null | HTMLElement>(null);
+
+    function toggleWidget(id: WidgetId) {
+
+        setWidgetPrefs((prev) => {
+            const next = { ...prev, [id]: !prev[id] };
+            localStorage.setItem(DASHBOARD_LAYOUT_KEY, JSON.stringify(next));
+            return next;
+        });
+
+    }
 
     useEffect(() => {
 
@@ -136,17 +185,49 @@ export default function Dashboard() {
                     Painel de Controle
                 </Typography>
 
-                <Typography
-                    variant="body2"
-                    color="#94A3B8"
-                >
-                    v{dashboard?.version || "2.0"}
-                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+
+                    <Typography
+                        variant="body2"
+                        color="#94A3B8"
+                    >
+                        v{dashboard?.version || "2.0"}
+                    </Typography>
+
+                    <Tooltip title="Personalizar painel">
+                        <IconButton
+                            size="small"
+                            onClick={(e) => setCustomizeAnchor(e.currentTarget)}
+                            sx={{ color: "#94A3B8", border: "1px solid #1E293B" }}
+                        >
+                            <TuneIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+
+                    <Menu
+                        anchorEl={customizeAnchor}
+                        open={Boolean(customizeAnchor)}
+                        onClose={() => setCustomizeAnchor(null)}
+                    >
+                        {WIDGETS.map((widget) => (
+                            <MenuItem key={widget.id} onClick={() => toggleWidget(widget.id)} dense>
+                                <FormControlLabel
+                                    control={<Checkbox checked={widgetPrefs[widget.id]} size="small" />}
+                                    label={widget.label}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={() => toggleWidget(widget.id)}
+                                />
+                            </MenuItem>
+                        ))}
+                    </Menu>
+
+                </Box>
 
             </Box>
 
             <Grid container spacing={3} mb={4}>
 
+                {widgetPrefs.stat_products && (
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Produtos Rastreados"
@@ -156,7 +237,9 @@ export default function Dashboard() {
                         color="#38BDF8"
                     />
                 </Grid>
+                )}
 
+                {widgetPrefs.stat_pipeline && (
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Pipeline IA"
@@ -166,7 +249,9 @@ export default function Dashboard() {
                         color="#8B5CF6"
                     />
                 </Grid>
+                )}
 
+                {widgetPrefs.stat_status && (
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Status do Sistema"
@@ -176,7 +261,9 @@ export default function Dashboard() {
                         color="#10B981"
                     />
                 </Grid>
+                )}
 
+                {widgetPrefs.stat_shopee && (
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Shopee API"
@@ -186,11 +273,13 @@ export default function Dashboard() {
                         color={products.length > 0 ? "#F59E0B" : "#10B981"}
                     />
                 </Grid>
+                )}
 
             </Grid>
 
             <Grid container spacing={3} mb={4}>
 
+                {widgetPrefs.products_table && (
                 <Grid item xs={12} md={8}>
 
                     <Card
@@ -368,7 +457,9 @@ export default function Dashboard() {
                     </Card>
 
                 </Grid>
+                )}
 
+                {widgetPrefs.health && (
                 <Grid item xs={12} md={4}>
 
                     <Card
@@ -411,6 +502,7 @@ export default function Dashboard() {
                     </Card>
 
                 </Grid>
+                )}
 
             </Grid>
 

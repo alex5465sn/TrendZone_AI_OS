@@ -5,6 +5,7 @@ export interface Product {
     uuid: string;
     item_id: number;
     shop_id: number;
+    category: string;
     name: string;
     price: number;
     commission: number;
@@ -24,6 +25,7 @@ export interface Product {
 export interface ProductCreate {
     item_id: number;
     shop_id: number;
+    category?: string;
     name: string;
     price: number;
     commission: number;
@@ -34,6 +36,7 @@ export interface ProductCreate {
 }
 
 export interface ProductUpdate {
+    category?: string;
     name?: string;
     price?: number;
     commission?: number;
@@ -47,8 +50,9 @@ export interface ProductUpdate {
     is_active?: boolean;
 }
 
-export async function getProducts(): Promise<Product[]> {
-    return getData<Product[]>("/products");
+export async function getProducts(category?: string): Promise<Product[]> {
+    const query = category ? `?category=${encodeURIComponent(category)}` : "";
+    return getData<Product[]>(`/products${query}`);
 }
 
 export async function getProductById(id: number): Promise<Product> {

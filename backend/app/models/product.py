@@ -50,6 +50,8 @@ class Product(BaseModel):
 
         Index("idx_product_item", "item_id"),
 
+        Index("idx_product_category", "category"),
+
         Index("idx_product_shop", "shop_id"),
 
         Index("idx_product_score", "score"),
@@ -86,6 +88,12 @@ class Product(BaseModel):
     shop_id: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
+    )
+
+    category: Mapped[str] = mapped_column(
+        String(60),
+        nullable=False,
+        default="geral",
     )
 
     # =====================================================

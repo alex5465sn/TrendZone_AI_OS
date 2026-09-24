@@ -38,6 +38,8 @@ class ProductCreate(BaseModel):
 
     shop_id: int
 
+    category: str = "geral"
+
     name: str = Field(
         min_length=3,
         max_length=255,
@@ -78,6 +80,8 @@ class ProductUpdate(BaseModel):
     """
 
     name: str | None = None
+
+    category: str | None = None
 
     price: Decimal | None = None
 
@@ -120,6 +124,8 @@ class ProductResponse(BaseModel):
     item_id: int
 
     shop_id: int
+
+    category: str
 
     name: str
 

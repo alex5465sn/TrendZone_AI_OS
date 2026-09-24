@@ -22,16 +22,7 @@ import {
     type ShopeeProductNode,
 } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
-
-const categories = [
-    "Eletrônicos",
-    "Casa",
-    "Moda",
-    "Beleza",
-    "Esportes",
-    "Brinquedos",
-    "Automotivo",
-];
+import { CATEGORIES } from "../../constants/categories";
 
 export default function Products() {
 
@@ -82,10 +73,10 @@ export default function Products() {
 
     }
 
-    function handleCategory(category: string) {
+    function handleCategory(categoryId: string, categoryKeywords: string[]) {
 
-        setActiveCategory(category);
-        setKeyword(category);
+        setActiveCategory(categoryId);
+        setKeyword(categoryKeywords[0] || categoryId);
 
     }
 
@@ -96,6 +87,7 @@ export default function Products() {
             await createProduct({
                 item_id: product.itemId,
                 shop_id: product.shopId,
+                category: activeCategory || "geral",
                 name: product.productName,
                 price: Number(product.price),
                 commission: Number(product.commissionRate) * 100,
@@ -198,14 +190,14 @@ export default function Products() {
                 }}
             >
 
-                {categories.map((category) => (
+                {CATEGORIES.filter((category) => category.keywords.length > 0).map((category) => (
 
                     <Chip
-                        key={category}
-                        label={category}
-                        onClick={() => handleCategory(category)}
+                        key={category.id}
+                        label={category.label}
+                        onClick={() => handleCategory(category.id, category.keywords)}
                         sx={{
-                            backgroundColor: activeCategory === category ? "#2563EB" : "#1E293B",
+                            backgroundColor: activeCategory === category.id ? "#2563EB" : "#1E293B",
                             color: "#F8FAFC",
                             fontWeight: 500,
                             cursor: "pointer",
