@@ -160,10 +160,10 @@ def generate_text(
     content = ContentGeneratorService.generate(
         {
             "name": product.name,
-            "price": product.price,
-            "commission": product.commission,
-            "rating": product.rating,
-            "sales": product.sales,
+            "price": float(product.price or 0),
+            "commission": float(product.commission or 0),
+            "rating": float(product.rating or 0),
+            "sales": int(product.sales or 0),
         },
         tone=payload.tone,
     )
