@@ -33,11 +33,13 @@ def emerging_products(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Product.commission é salvo como fração (ex.: 0.13 = 13%), enquanto
+    # min_commission chega da tela como percentual (ex.: 10 = 10%).
     products = (
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= min_commission,
+            Product.commission >= min_commission / 100,
             Product.rating >= min_rating,
             Product.sales >= min_sales,
             Product.sales <= max_sales,
@@ -53,14 +55,14 @@ def emerging_products(
             "name": p.name,
             "image": p.image,
             "price": float(p.price),
-            "commission": float(p.commission),
+            "commission": round(float(p.commission) * 100, 2),
             "rating": p.rating,
             "sales": p.sales,
             "score": p.score,
             "recommendation": p.recommendation,
             "offer_link": p.offer_link,
             "opportunity_index": round(
-                (p.commission * p.rating) / max(p.sales, 1) * 100, 2
+                (float(p.commission) * 100 * p.rating) / max(p.sales, 1) * 100, 2
             ),
             "created_at": p.created_at.isoformat() if p.created_at else None,
         }
@@ -83,7 +85,7 @@ def high_commission_products(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= min_commission,
+            Product.commission >= min_commission / 100,
         )
         .order_by(Product.commission.desc(), Product.score.desc())
         .limit(limit)
@@ -96,7 +98,7 @@ def high_commission_products(
             "name": p.name,
             "image": p.image,
             "price": float(p.price),
-            "commission": float(p.commission),
+            "commission": round(float(p.commission) * 100, 2),
             "rating": p.rating,
             "sales": p.sales,
             "score": p.score,
@@ -132,12 +134,12 @@ def trending_products(
             "name": p.name,
             "image": p.image,
             "price": float(p.price),
-            "commission": float(p.commission),
+            "commission": round(float(p.commission) * 100, 2),
             "rating": p.rating,
             "sales": p.sales,
             "score": p.score,
             "offer_link": p.offer_link,
-            "heat_index": round(p.sales * p.rating * (p.commission / 100), 2),
+            "heat_index": round(p.sales * p.rating * float(p.commission), 2),
         }
         for p in products
     ]
@@ -191,7 +193,7 @@ def smart_recommendations(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= 15,
+            Product.commission >= 0.15,
             Product.rating >= 4.0,
             Product.sales <= 200,
             Product.sales >= 5,
@@ -216,7 +218,7 @@ def smart_recommendations(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= 20,
+            Product.commission >= 0.20,
             Product.rating >= 4.0,
         )
         .order_by(Product.commission.desc())
@@ -230,7 +232,7 @@ def smart_recommendations(
             "name": p.name,
             "image": p.image,
             "price": float(p.price),
-            "commission": float(p.commission),
+            "commission": round(float(p.commission) * 100, 2),
             "rating": p.rating,
             "sales": p.sales,
             "score": p.score,
