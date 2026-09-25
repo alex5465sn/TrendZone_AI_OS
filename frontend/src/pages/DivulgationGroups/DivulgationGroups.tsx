@@ -33,6 +33,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import { getProducts, type Product } from "../../services/productService";
 import {
@@ -142,6 +143,23 @@ export default function DivulgationGroups() {
             setToast("Texto copiado! Agora é só colar no grupo.");
         } catch {
             setError("Não foi possível copiar automaticamente. Selecione e copie o texto manualmente.");
+        }
+    }
+
+    async function handlePublish(g: DivulgationGroup) {
+        if (!content) return;
+
+        try {
+            await navigator.clipboard.writeText(fullText());
+        } catch {
+            // Segue mesmo se o clipboard falhar - o link ainda abre.
+        }
+
+        if (g.link) {
+            window.open(g.link, "_blank", "noopener,noreferrer");
+            setToast(`Texto copiado! O grupo "${g.name}" foi aberto em outra aba — agora é só colar.`);
+        } else {
+            setToast("Texto copiado! Este grupo não tem link cadastrado, abra-o manualmente e cole.");
         }
     }
 
@@ -331,15 +349,26 @@ export default function DivulgationGroups() {
                                                     <Typography variant="caption" color="#64748B">Melhor horário: {g.best_time}</Typography>
                                                 </Box>
                                             )}
-                                            <Button
-                                                fullWidth size="small" startIcon={<ContentCopyIcon />}
-                                                disabled={!content}
-                                                onClick={handleCopy}
-                                                sx={{ mt: 2, color: "#10B981", borderColor: "#10B981" }}
-                                                variant="outlined"
-                                            >
-                                                Copiar texto
-                                            </Button>
+                                            <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                                                <Button
+                                                    fullWidth size="small" startIcon={<ContentCopyIcon />}
+                                                    disabled={!content}
+                                                    onClick={handleCopy}
+                                                    sx={{ color: "#10B981", borderColor: "#10B981" }}
+                                                    variant="outlined"
+                                                >
+                                                    Copiar
+                                                </Button>
+                                                <Button
+                                                    fullWidth size="small" startIcon={<OpenInNewIcon />}
+                                                    disabled={!content}
+                                                    onClick={() => handlePublish(g)}
+                                                    sx={{ backgroundColor: "#F97316" }}
+                                                    variant="contained"
+                                                >
+                                                    Publicar
+                                                </Button>
+                                            </Box>
                                         </CardContent>
                                     </Card>
                                 </Grid>
