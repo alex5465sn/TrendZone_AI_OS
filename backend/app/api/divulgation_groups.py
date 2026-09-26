@@ -17,7 +17,7 @@ organização dos grupos, o "copiar e colar" fica com o usuário.
 """
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -44,6 +44,17 @@ class DivulgationGroupRequest(BaseModel):
     best_time: str | None = None
     member_count: int = 0
 
+    @field_validator("member_count", mode="before")
+    @classmethod
+    def _coerce_member_count(cls, v):
+        if v is None or v == "":
+            return 0
+        if isinstance(v, str):
+            v = v.replace(".", "").replace(",", "")
+            if v == "":
+                return 0
+        return int(float(v))
+
 
 class DivulgationGroupUpdateRequest(BaseModel):
     name: str | None = None
@@ -53,6 +64,17 @@ class DivulgationGroupUpdateRequest(BaseModel):
     link: str | None = None
     best_time: str | None = None
     member_count: int | None = None
+
+    @field_validator("member_count", mode="before")
+    @classmethod
+    def _coerce_member_count(cls, v):
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            v = v.replace(".", "").replace(",", "")
+            if v == "":
+                return None
+        return int(float(v))
 
 
 class GenerateTextRequest(BaseModel):

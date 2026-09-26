@@ -397,7 +397,7 @@ export default function DivulgationGroups() {
                     <TextField label="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                     <TextField label="Link do grupo (opcional)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                     <TextField label="Melhor horário (ex: 19h-21h)" value={form.best_time} onChange={(e) => setForm({ ...form, best_time: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
-                    <TextField label="Nº de membros (opcional)" type="number" value={form.member_count} onChange={(e) => setForm({ ...form, member_count: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
+                    <TextField label="Nº de membros (opcional)" value={form.member_count} onChange={(e) => setForm({ ...form, member_count: e.target.value.replace(/\D/g, "") })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => { setDialogOpen(false); setEditingId(null); }} sx={{ color: "#94A3B8" }}>Cancelar</Button>
