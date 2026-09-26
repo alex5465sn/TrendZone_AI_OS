@@ -15,6 +15,7 @@ from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.repositories.product_repository import ProductRepository
 from app.integrations.facebook.facebook_client import FacebookClient
 from app.services.facebook_auto_post_service import run_daily_auto_schedule
+from app.services.product_performance_score import run_performance_recalculation
 from app.services.notification_service import send_push_notification
 
 CHECK_INTERVAL_SECONDS = 60
@@ -36,6 +37,10 @@ class FacebookSchedulerService:
             run_daily_auto_schedule()
         except Exception as e:
             logger.warning(f"[FB_SCHEDULER] Erro no agendamento automatico inicial: {e}")
+        try:
+            run_performance_recalculation()
+        except Exception as e:
+            logger.warning(f"[FB_SCHEDULER] Erro no recalculo inicial de performance: {e}")
         logger.info("[FB_SCHEDULER] Servico iniciado.")
 
     @classmethod
@@ -54,6 +59,7 @@ class FacebookSchedulerService:
                 cycle += 1
                 if cycle % AUTO_SCHEDULE_INTERVAL_CYCLES == 0:
                     run_daily_auto_schedule()
+                    run_performance_recalculation()
             except Exception as e:
                 logger.warning(f"[FB_SCHEDULER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)

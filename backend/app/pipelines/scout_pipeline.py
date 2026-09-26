@@ -177,8 +177,16 @@ class ScoutPipeline:
                 existing.commission = product.commission
                 existing.rating = product.rating
                 existing.sales = product.sales
-                existing.score = product.score
-                existing.recommendation = product.decision
+                existing.base_score = product.score
+                # Preserva o ajuste de performance real ja calculado
+                # (ver ProductPerformanceScore) em vez de apagar o
+                # aprendizado a cada nova busca do Scout.
+                existing.score = round(
+                    existing.base_score + (existing.performance_adjustment or 0.0), 2
+                )
+                existing.recommendation = DecisionEngine.classify(
+                    {"score": existing.score}
+                )
                 existing.category = category
 
                 ProductRepository.update(self.db, existing)
@@ -196,6 +204,8 @@ class ScoutPipeline:
                 rating=product.rating,
                 sales=product.sales,
                 score=product.score,
+                base_score=product.score,
+                performance_adjustment=0.0,
                 recommendation=product.decision,
                 category=category,
             )

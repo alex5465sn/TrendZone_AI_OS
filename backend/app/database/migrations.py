@@ -53,6 +53,8 @@ EXTRA_COLUMNS = {
     ],
     "products": [
         ("category", "VARCHAR(60) NOT NULL DEFAULT 'geral'"),
+        ("base_score", "FLOAT NOT NULL DEFAULT 0.0"),
+        ("performance_adjustment", "FLOAT NOT NULL DEFAULT 0.0"),
     ],
 }
 

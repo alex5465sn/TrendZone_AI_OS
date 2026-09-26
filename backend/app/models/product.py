@@ -148,6 +148,16 @@ class Product(BaseModel):
         default=0.0,
     )
 
+    base_score: Mapped[float] = mapped_column(
+        Float,
+        default=0.0,
+    )
+
+    performance_adjustment: Mapped[float] = mapped_column(
+        Float,
+        default=0.0,
+    )
+
     confidence: Mapped[float] = mapped_column(
         Float,
         default=0.0,

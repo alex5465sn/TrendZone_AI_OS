@@ -143,6 +143,10 @@ class ProductResponse(BaseModel):
 
     score: float
 
+    base_score: float
+
+    performance_adjustment: float
+
     confidence: float
 
     recommendation: str

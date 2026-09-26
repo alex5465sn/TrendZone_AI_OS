@@ -9,6 +9,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.channel_tracking import ChannelTracking
+from app.services.product_performance_score import ProductPerformanceScore
 from app.api.response import ResponseBuilder
 
 router = APIRouter(
@@ -119,6 +120,23 @@ def channel_summary(
     ]
 
     return ResponseBuilder.success(data=result)
+
+
+@router.post("/recalculate-score")
+def recalculate_score(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Fecha o loop de dados: reponde o Score dos produtos com base no
+    que realmente converteu em Canais & SubIDs (nao espera o ciclo
+    automatico de ate 60 minutos do scheduler em segundo plano).
+    """
+    summary = ProductPerformanceScore.recalculate_all(db)
+    return ResponseBuilder.success(
+        data=summary,
+        message="Score reponderado com base na performance real.",
+    )
 
 
 @router.post("/")
