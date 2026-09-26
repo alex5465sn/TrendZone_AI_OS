@@ -89,6 +89,7 @@ export default function Scout() {
     const [postText, setPostText] = useState("");
     const [postProduct, setPostProduct] = useState<ShopeeProductNode | null>(null);
     const postAlertRef = useRef<HTMLDivElement>(null);
+    const generatePostRequestIdRef = useRef(0);
     const [fbConfigured, setFbConfigured] = useState(false);
     const [posting, setPosting] = useState(false);
     const [postedIds, setPostedIds] = useState<number[]>(() => {
@@ -251,6 +252,7 @@ export default function Scout() {
     }
 
     async function handleGeneratePost(product: ShopeeProductNode) {
+        const requestId = ++generatePostRequestIdRef.current;
         let trackableLink = product.offerLink;
 
         try {
@@ -264,6 +266,14 @@ export default function Scout() {
             trackableLink = tracking.tracking_url;
         } catch (err) {
             console.error("Falha ao criar link de rastreamento, usando link original.", err);
+        }
+
+        // Se, enquanto aguardávamos o link de rastreamento, o usuário já clicou
+        // em "Gerar Post" de outro produto, esta resposta está obsoleta e não
+        // deve sobrescrever o post mais recente (evita mistura entre produtos
+        // ao gerar posts sequenciais rapidamente).
+        if (generatePostRequestIdRef.current !== requestId) {
+            return;
         }
 
         const text = generateFacebookPost({
