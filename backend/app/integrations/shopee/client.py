@@ -26,11 +26,16 @@ import requests
 
 from app.core.settings import settings
 from app.integrations.shopee.signature import ShopeeSignature
+from app.integrations.shopee.rate_limiter import RateLimiter
 
 
 class ShopeeClient:
 
     DEFAULT_TIMEOUT = 60
+
+    # Compartilhado entre todas as instancias do processo: o limite
+    # e da API da Shopee como um todo, nao por instancia de client.
+    _rate_limiter = RateLimiter()
 
     def __init__(
         self,
@@ -78,6 +83,8 @@ class ShopeeClient:
 
         payload = params or {}
 
+        self._rate_limiter.acquire()
+
         response = requests.get(
 
             endpoint,
@@ -105,6 +112,8 @@ class ShopeeClient:
     ) -> dict[str, Any]:
 
         body = payload or {}
+
+        self._rate_limiter.acquire()
 
         response = requests.post(
 
@@ -150,6 +159,8 @@ class ShopeeClient:
             separators=(",", ":"),
             ensure_ascii=False,
         )
+
+        self._rate_limiter.acquire()
 
         response = requests.post(
 
