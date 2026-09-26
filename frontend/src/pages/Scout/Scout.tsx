@@ -35,6 +35,9 @@ import {
     generateProductVideo,
     postVideoToFacebook,
     createScheduledPost,
+    runAutoSchedule,
+    listScheduledPosts,
+    cancelScheduledPost,
 } from "../../services/facebookService";
 import { analyzeProduct, type AnalyzeResult } from "../../services/commercialIntelligenceService";
 
@@ -99,6 +102,8 @@ export default function Scout() {
     });
     const [generatingVideo, setGeneratingVideo] = useState(false);
     const [videoUrl, setVideoUrl] = useState("");
+    const [scheduledPosts, setScheduledPosts] = useState<any[]>([]);
+    const [runningAutoSchedule, setRunningAutoSchedule] = useState(false);
     const [videoFile, setVideoFile] = useState("");
     const [postingVideo, setPostingVideo] = useState(false);
     const [scheduling, setScheduling] = useState(false);
@@ -109,7 +114,39 @@ export default function Scout() {
         getFacebookStatus()
             .then((s) => setFbConfigured(s.configured))
             .catch(() => setFbConfigured(false));
+        loadScheduledPosts();
     }, []);
+
+    function loadScheduledPosts() {
+        listScheduledPosts()
+            .then((posts) => setScheduledPosts(posts || []))
+            .catch(() => setScheduledPosts([]));
+    }
+
+    async function handleRunAutoSchedule() {
+        try {
+            setRunningAutoSchedule(true);
+            const result = await runAutoSchedule();
+            alert(`✓ ${result.created} post(s) novo(s) agendado(s) automaticamente, sem repetir produtos.`);
+            loadScheduledPosts();
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao gerar agendamento automático.");
+        } finally {
+            setRunningAutoSchedule(false);
+        }
+    }
+
+    async function handleCancelScheduled(id: number) {
+        if (!window.confirm("Cancelar este post agendado?")) return;
+        try {
+            await cancelScheduledPost(id);
+            loadScheduledPosts();
+        } catch (err) {
+            console.error(err);
+            alert("✗ Erro ao cancelar agendamento.");
+        }
+    }
 
     function markAsPosted(itemId: number) {
         setPostedIds((prev) => {
@@ -308,6 +345,7 @@ export default function Scout() {
                 scheduled_at: scheduledDate.toISOString(),
             });
             alert(`✓ Post agendado para ${scheduledDate.toLocaleString()}!`);
+            loadScheduledPosts();
         } catch (err: any) {
             console.error(err);
             alert(err.response?.data?.message || "✗ Erro ao agendar o post.");
@@ -472,6 +510,57 @@ export default function Scout() {
                 </Button>
 
             </Box>
+
+            <Card sx={{ backgroundColor: "#0F172A", border: "1px solid #1E293B", borderRadius: 3, mb: 3 }}>
+                <CardContent>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+                        <Box>
+                            <Typography fontWeight={700}>🗓️ Agendamento Automático de Posts</Typography>
+                            <Typography color="#94A3B8" fontSize="0.85rem">
+                                Publica automaticamente uma média de 5 posts por dia (horários de pico), escolhendo
+                                sempre produtos diferentes dos usados nos últimos 30 dias.
+                            </Typography>
+                        </Box>
+                        <Button
+                            variant="outlined"
+                            onClick={handleRunAutoSchedule}
+                            disabled={runningAutoSchedule}
+                            sx={{ textTransform: "none", borderColor: "#8B5CF6", color: "#8B5CF6" }}
+                        >
+                            {runningAutoSchedule ? "Gerando..." : "Gerar agendamento agora"}
+                        </Button>
+                    </Box>
+
+                    {scheduledPosts.filter((p) => p.status === "pendente").length > 0 && (
+                        <Box mt={2} display="flex" flexDirection="column" gap={1}>
+                            {scheduledPosts
+                                .filter((p) => p.status === "pendente")
+                                .slice(0, 10)
+                                .map((p) => (
+                                    <Box
+                                        key={p.id}
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                        sx={{ backgroundColor: "#1E293B", borderRadius: 2, px: 2, py: 1 }}
+                                    >
+                                        <Typography fontSize="0.8rem" color="#CBD5E1" noWrap sx={{ maxWidth: "70%" }}>
+                                            Produto #{p.product_item_id} — {new Date(p.scheduled_at).toLocaleString("pt-BR")}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            onClick={() => handleCancelScheduled(p.id)}
+                                            sx={{ textTransform: "none" }}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                    </Box>
+                                ))}
+                        </Box>
+                    )}
+                </CardContent>
+            </Card>
 
             <Box sx={{ mb: 2 }}>
 

@@ -50,7 +50,7 @@ class TokenPayload(BaseModel):
     exp: datetime
     iat: datetime
     type: str
-    role: str
+    role: str | None = None
 
 
 def create_access_token(

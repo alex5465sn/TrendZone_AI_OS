@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,6 +9,18 @@ from app.repositories.base_repository import BaseRepository
 
 class ScheduledPostRepository(BaseRepository[ScheduledPost]):
     model = ScheduledPost
+
+    @classmethod
+    def get_recently_used_product_ids(
+        cls,
+        db: Session,
+        days: int = 30,
+    ) -> set[int]:
+        since = datetime.utcnow() - timedelta(days=days)
+        stmt = select(ScheduledPost.product_item_id).where(
+            ScheduledPost.created_at >= since,
+        )
+        return set(db.execute(stmt).scalars().all())
 
     @classmethod
     def get_due(cls, db: Session, now: datetime) -> list[ScheduledPost]:

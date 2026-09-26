@@ -98,14 +98,19 @@ class ProductRepository(BaseRepository[Product]):
         cls,
         db: Session,
         limit: int = 10,
+        exclude_item_ids: set[int] | None = None,
     ) -> list[Product]:
 
         stmt = (
             select(Product)
             .where(Product.is_active.is_(True))
             .order_by(Product.score.desc())
-            .limit(limit)
         )
+
+        if exclude_item_ids:
+            stmt = stmt.where(Product.item_id.notin_(exclude_item_ids))
+
+        stmt = stmt.limit(limit)
 
         return list(db.execute(stmt).scalars().all())
 

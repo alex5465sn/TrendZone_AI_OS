@@ -33,7 +33,22 @@ def run_daily_auto_schedule() -> int:
             logger.info("[FB_AUTO_POST] Ja existem posts agendados para hoje, pulando.")
             return 0
 
-        products = ProductRepository.get_top_score(db, limit=PRODUCTS_PER_DAY)
+        recently_used = ScheduledPostRepository.get_recently_used_product_ids(db, days=30)
+        products = ProductRepository.get_top_score(
+            db, limit=PRODUCTS_PER_DAY, exclude_item_ids=recently_used,
+        )
+
+        if len(products) < PRODUCTS_PER_DAY:
+            faltam = PRODUCTS_PER_DAY - len(products)
+            ja_escolhidos = {p.item_id for p in products}
+            complemento = ProductRepository.get_top_score(db, limit=faltam + len(recently_used))
+            for produto in complemento:
+                if produto.item_id not in ja_escolhidos:
+                    products.append(produto)
+                    ja_escolhidos.add(produto.item_id)
+                if len(products) >= PRODUCTS_PER_DAY:
+                    break
+
         if not products:
             logger.info("[FB_AUTO_POST] Nenhum produto rastreado para gerar posts.")
             return 0
