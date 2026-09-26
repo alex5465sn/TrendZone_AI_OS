@@ -149,6 +149,14 @@ export default function DivulgationGroups() {
     async function handlePublish(g: DivulgationGroup) {
         if (!content) return;
 
+        // Para grupos de WhatsApp, usamos o link wa.me com o texto já
+        // preenchido - você só confirma o envio, sem precisar colar.
+        if (g.platform === "whatsapp") {
+            window.open(`https://wa.me/?text=${encodeURIComponent(fullText())}`, "_blank", "noopener,noreferrer");
+            setToast(`WhatsApp aberto com o texto pronto — escolha o grupo "${g.name}" e envie.`);
+            return;
+        }
+
         try {
             await navigator.clipboard.writeText(fullText());
         } catch {

@@ -48,6 +48,8 @@ class ProfitOverrides(BaseModel):
     ads_cost: float | None = None
     estimated_returns_rate: float | None = None
     operational_cost: float | None = None
+    shopee_fixed_fee: float | None = None
+    is_shopee_seller: bool | None = None
 
 
 class AnalyzeRequest(BaseModel):

@@ -15,6 +15,7 @@ import {
     MenuItem,
     Snackbar,
     Divider,
+    Chip,
 } from "@mui/material";
 
 import SaveIcon from "@mui/icons-material/Save";
@@ -35,6 +36,12 @@ export default function AIAgent() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [toast, setToast] = useState("");
+
+    const QUICK_QUESTIONS = [
+        "Calcule minha margem real considerando comissão, frete e taxa fixa da Shopee.",
+        "Esse tipo de produto pode ter alguma restrição nas políticas da Shopee?",
+        "Sugira um cupom de desconto pra aumentar a conversão desse produto.",
+    ];
 
     const [testMessage, setTestMessage] = useState("Oi, quanto custa o produto?");
     const [testReply, setTestReply] = useState("");
@@ -208,6 +215,18 @@ export default function AIAgent() {
                     <Typography variant="body2" color="#94A3B8" sx={{ mb: 2 }}>
                         Envie uma mensagem de teste (não é enviada pelo WhatsApp de verdade).
                     </Typography>
+
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+                        {QUICK_QUESTIONS.map((q) => (
+                            <Chip
+                                key={q}
+                                label={q}
+                                size="small"
+                                onClick={() => setTestMessage(q)}
+                                sx={{ backgroundColor: "#1E293B", color: "#94A3B8", cursor: "pointer" }}
+                            />
+                        ))}
+                    </Box>
 
                     <TextField
                         fullWidth

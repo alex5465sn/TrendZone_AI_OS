@@ -25,6 +25,7 @@ class CostBreakdown:
     ads_cost: float = 0.0
     estimated_returns_rate: float = 0.0
     operational_cost: float = 0.0
+    shopee_fixed_fee: float = 0.0
 
 
 @dataclass
@@ -54,6 +55,7 @@ def calculate_profit(costs: CostBreakdown) -> ProfitResult:
         + costs.ads_cost
         + returns_value
         + costs.operational_cost
+        + costs.shopee_fixed_fee
     )
 
     net_profit = round(costs.sale_price - total_costs, 2)
