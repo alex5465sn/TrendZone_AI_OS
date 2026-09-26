@@ -59,6 +59,27 @@ const PLATFORM_FILTERS = [
     { value: "facebook", label: "Facebook" },
 ];
 
+const CATEGORY_KEYWORDS: { category: string; keywords: string[] }[] = [
+    { category: "achadinhos", keywords: ["achadinho", "achados", "promoção", "promocao", "oferta"] },
+    { category: "moda", keywords: ["moda", "roupa", "roupas", "look", "vestido", "calçado", "calcado"] },
+    { category: "beleza", keywords: ["beleza", "skincare", "maquiagem", "cosmético", "cosmetico", "perfume"] },
+    { category: "eletrônicos", keywords: ["eletrônico", "eletronico", "tech", "gadget", "celular", "informática", "informatica"] },
+    { category: "casa", keywords: ["casa", "decoração", "decoracao", "cozinha", "utilidades", "lar"] },
+    { category: "pet", keywords: ["pet", "cachorro", "gato", "animal"] },
+    { category: "infantil", keywords: ["infantil", "bebê", "bebe", "criança", "crianca", "kids"] },
+    { category: "fitness", keywords: ["fitness", "academia", "suplemento", "esporte"] },
+];
+
+function suggestCategoryFromName(name: string): string | null {
+    const normalized = name.toLowerCase();
+    for (const entry of CATEGORY_KEYWORDS) {
+        if (entry.keywords.some((k) => normalized.includes(k))) {
+            return entry.category;
+        }
+    }
+    return null;
+}
+
 export default function DivulgationGroups() {
     const [products, setProducts] = useState<Product[]>([]);
     const [groups, setGroups] = useState<DivulgationGroup[]>([]);
@@ -84,15 +105,18 @@ export default function DivulgationGroups() {
         best_time: "",
         member_count: "0",
     });
+    const [categoryManuallyEdited, setCategoryManuallyEdited] = useState(false);
 
     function openCreateDialog() {
         setEditingId(null);
         setForm({ name: "", platform: "whatsapp", category: "achadinhos", link: "", best_time: "", member_count: "0" });
+        setCategoryManuallyEdited(false);
         setDialogOpen(true);
     }
 
     function openEditDialog(g: DivulgationGroup) {
         setEditingId(g.id);
+        setCategoryManuallyEdited(true);
         setForm({
             name: g.name,
             platform: g.platform,
@@ -389,12 +413,32 @@ export default function DivulgationGroups() {
             <Dialog open={dialogOpen} onClose={() => { setDialogOpen(false); setEditingId(null); }} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: "#0F172A", color: "#F8FAFC" } }}>
                 <DialogTitle>{editingId ? "Editar Grupo de Divulgação" : "Cadastrar Grupo de Divulgação"}</DialogTitle>
                 <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
-                    <TextField label="Nome do grupo" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
+                    <TextField
+                        label="Nome do grupo"
+                        value={form.name}
+                        onChange={(e) => {
+                            const name = e.target.value;
+                            const suggested = !categoryManuallyEdited ? suggestCategoryFromName(name) : null;
+                            setForm({ ...form, name, ...(suggested ? { category: suggested } : {}) });
+                        }}
+                        InputLabelProps={{ sx: { color: "#94A3B8" } }}
+                        InputProps={{ sx: { color: "#F8FAFC" } }}
+                    />
                     <TextField select label="Plataforma" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }}>
                         <MenuItem value="whatsapp">WhatsApp</MenuItem>
                         <MenuItem value="facebook">Facebook</MenuItem>
                     </TextField>
-                    <TextField label="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
+                    <TextField
+                        label="Categoria"
+                        value={form.category}
+                        onChange={(e) => {
+                            setCategoryManuallyEdited(true);
+                            setForm({ ...form, category: e.target.value });
+                        }}
+                        helperText="Sugerida automaticamente a partir do nome do grupo"
+                        InputLabelProps={{ sx: { color: "#94A3B8" } }}
+                        InputProps={{ sx: { color: "#F8FAFC" } }}
+                    />
                     <TextField label="Link do grupo (opcional)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                     <TextField label="Melhor horário (ex: 19h-21h)" value={form.best_time} onChange={(e) => setForm({ ...form, best_time: e.target.value })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
                     <TextField label="Nº de membros (opcional)" value={form.member_count} onChange={(e) => setForm({ ...form, member_count: e.target.value.replace(/\D/g, "") })} InputLabelProps={{ sx: { color: "#94A3B8" } }} InputProps={{ sx: { color: "#F8FAFC" } }} />
