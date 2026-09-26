@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
     Box,
@@ -85,6 +85,7 @@ export default function Scout() {
     const [postProductId, setPostProductId] = useState<number | null>(null);
     const [postText, setPostText] = useState("");
     const [postProduct, setPostProduct] = useState<ShopeeProductNode | null>(null);
+    const postAlertRef = useRef<HTMLDivElement>(null);
     const [fbConfigured, setFbConfigured] = useState(false);
     const [posting, setPosting] = useState(false);
     const [postedIds, setPostedIds] = useState<number[]>(() => {
@@ -241,6 +242,12 @@ export default function Scout() {
         setVideoUrl("");
         setVideoFile("");
     }
+
+    useEffect(() => {
+        if (postProductId !== null) {
+            postAlertRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [postProductId, postText]);
 
     async function handleGenerateVideo() {
         if (!postProduct) return;
@@ -517,6 +524,7 @@ export default function Scout() {
 
             {postProductId !== null && (
                 <Alert
+                    ref={postAlertRef}
                     severity="info"
                     sx={{ mb: 3, whiteSpace: "pre-wrap" }}
                     onClose={() => setPostProductId(null)}
