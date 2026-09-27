@@ -133,6 +133,11 @@ const baseMenu = [
         icon: <GroupsIcon />,
         path: "/divulgation-groups",
     },
+    {
+        text: "Plano de Primeira Venda",
+        icon: <TrendingUpIcon />,
+        path: "/first-sale-plan",
+    },
 
     {
         text: "Log de Auditoria",
