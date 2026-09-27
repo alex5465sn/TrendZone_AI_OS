@@ -15,6 +15,7 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.models.scheduled_post import ScheduledPost
 from app.services.content_generator_service import ContentGeneratorService
+from app.services.notification_service import NotificationService
 
 PEAK_HOURS = [7, 9, 12, 16, 19]
 PRODUCTS_PER_DAY = len(PEAK_HOURS)
@@ -75,6 +76,18 @@ def run_daily_auto_schedule() -> int:
             )
             ScheduledPostRepository.create(db, post)
             created += 1
+
+            # Envia notificação ao usuário
+            try:
+                NotificationService.send_post_published_notification(
+                    db,
+                    user_id=1,  # TODO: obter user_id do contexto
+                    product_name=product.name,
+                    channel="facebook",
+                    post_id=post.id,
+                )
+            except Exception as e:
+                logger.warning(f"[FB_AUTO_POST] Erro ao enviar notificação: {e}")
 
         logger.info(f"[FB_AUTO_POST] {created} post(s) agendado(s) automaticamente para hoje.")
         return created

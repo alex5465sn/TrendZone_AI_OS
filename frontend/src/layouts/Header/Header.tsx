@@ -12,6 +12,7 @@ import {
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationBell from "../../components/NotificationBell/NotificationBell";
 import { useNavigate } from "react-router-dom";
 
 import { logout, getUserInfo } from "../../services/authService";
@@ -50,14 +51,7 @@ export default function Header() {
 
                 <Box sx={{ flex: 1 }} />
 
-                <IconButton
-                    size="large"
-                    sx={{ color: "#94A3B8", mr: 1 }}
-                >
-                    <Badge badgeContent={0} color="error">
-                        <NotificationsIcon />
-                    </Badge>
-                </IconButton>
+                <NotificationBell />
 
                 <Tooltip title="Configurações">
                     <IconButton
