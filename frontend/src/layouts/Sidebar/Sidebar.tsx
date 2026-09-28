@@ -28,6 +28,7 @@ import HubIcon from "@mui/icons-material/Hub";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import BoltIcon from "@mui/icons-material/Bolt";
 import HistoryIcon from "@mui/icons-material/History";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TranslateIcon from "@mui/icons-material/Translate";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import PsychologyIcon from "@mui/icons-material/Psychology";

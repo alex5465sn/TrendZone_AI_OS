@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 
@@ -12,8 +12,8 @@ import { useState } from 'react'
 
 // Mock simples do componente Scout para testes
 const MockScout = () => {
-  const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState([])
+  const [loading] = useState(false)
+  const [products] = useState([])
 
   return (
     <div>
@@ -84,7 +84,6 @@ describe('Scout Component', () => {
 
 describe('Scout Category Selection', () => {
   it('deve permitir seleção de múltiplas categorias', () => {
-    const categories = ['achadinhos', 'moda', 'beleza']
     const selected = ['achadinhos', 'moda']
 
     expect(selected).toContain('achadinhos')

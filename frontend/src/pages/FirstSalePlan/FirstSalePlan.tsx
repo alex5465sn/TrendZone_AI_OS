@@ -14,9 +14,6 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import PendingIcon from '@mui/icons-material/Pending'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import api from '../../api/axios'
 
 interface FirstSalePlanData {
@@ -121,8 +118,6 @@ export default function FirstSalePlan() {
   }
 
   const preparationProgress = nicheValidated && groupsRegistered && championProducts >= 5 ? 100 : 50
-  const executionProgress = plan.metrics.total_clicks > 0 ? Math.min((plan.metrics.total_clicks / 50) * 100, 100) : 0
-  const conversionProgress = plan.metrics.total_conversions > 0 ? 100 : 0
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
