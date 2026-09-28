@@ -16,6 +16,7 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.scheduled_post_repository import ScheduledPostRepository
 from app.models.scheduled_post import ScheduledPost
 from app.services.content_generator_service import ContentGeneratorService
+from app.services.image_generator_service import generate_cover_image
 from app.services.notification_service import NotificationService
 
 PEAK_HOURS = [7, 9, 12, 16, 19]
@@ -87,11 +88,18 @@ def run_daily_auto_schedule() -> int:
             if scheduled_at < datetime.utcnow():
                 scheduled_at += timedelta(days=1)
 
+            try:
+                cover_image = generate_cover_image(product.name)
+            except Exception as e:
+                logger.warning(f"[FB_AUTO_POST] Erro ao gerar imagem de capa com IA: {e}")
+                cover_image = None
+            image_url = cover_image or product.image or ""
+
             post = ScheduledPost(
                 product_item_id=product.item_id,
                 message=f"{content['caption']}\n\n{content['hashtags']}",
                 link=product.offer_link or "",
-                image_url=product.image or "",
+                image_url=image_url,
                 scheduled_at=scheduled_at,
                 status="pendente",
             )

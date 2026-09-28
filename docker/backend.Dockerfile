@@ -13,7 +13,7 @@ COPY backend /app/backend
 
 WORKDIR /app/backend
 
-RUN mkdir -p /app/backend/media/videos
+RUN mkdir -p /app/backend/media/videos /app/backend/media/covers
 
 EXPOSE 8000
 
