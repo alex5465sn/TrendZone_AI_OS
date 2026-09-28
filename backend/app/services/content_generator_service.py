@@ -65,6 +65,31 @@ class ContentGeneratorService(BaseService):
         "Não é jabá, é ACHADO mesmo:",
     ]
 
+    _EDUCATIONAL_HOOKS = [
+        "💡 Antes de comprar, vale saber disso:",
+        "🤔 Um erro comum na hora de escolher:",
+        "📌 Dica de quem já comprou muito por aqui:",
+        "🧠 Isso pode te poupar uma compra ruim:",
+    ]
+
+    _EDUCATIONAL_TIPS = [
+        "Preço baixo é ótimo, mas o que realmente importa é se o produto resolve o "
+        "seu problema — vale checar avaliação e quantidade de vendas antes de decidir.",
+        "Muita gente compra só pelo desconto e esquece de ver se o item serve pro "
+        "uso que precisa. Vale sempre ler as avaliações reais de quem já comprou.",
+        "Um jeito simples de não se arrepender: prioriza vendedores com histórico "
+        "bom e nota alta, mesmo que custe um pouco mais.",
+        "Antes de clicar em comprar, pergunta pra você: isso resolve o que eu "
+        "preciso agora ou é só impulso? Se a resposta for sim, aí vale a pena.",
+    ]
+
+    _EDUCATIONAL_CTAS = [
+        "Se fizer sentido pra você, dá uma olhada nesse aqui:",
+        "Ficou com dúvida de qual escolher? Comenta aqui que te ajudo.",
+        "Guarda essa dica — e, se precisar, esse aqui é uma boa opção:",
+        "Vale pesquisar antes de comprar. Esse aqui passou no teste:",
+    ]
+
     _CHANNELS = [
         "Grupo de ofertas no WhatsApp",
         "Canal de cupons no Telegram",
@@ -112,6 +137,10 @@ class ContentGeneratorService(BaseService):
                 "Agora ou nunca — clica no link!",
             ],
         },
+        "educativo": {
+            "hooks": _EDUCATIONAL_HOOKS,
+            "ctas": _EDUCATIONAL_CTAS,
+        },
     }
 
     # =====================================================
@@ -144,13 +173,17 @@ class ContentGeneratorService(BaseService):
 
         title = f"{hook}: {name}"
 
-        use_story = random.random() < 0.5
-        opener = f"{story}\n\n" if use_story else f"{hook}!\n\n"
-
         stars = "⭐" * max(1, min(5, round(rating)))
         social_proof = f" | 🛒 {sales:,} vendas" if sales > 0 else ""
         price_line = f"💰 R$ {price:.2f}" if price > 0 else ""
         rating_line = f"{stars} {rating:.1f}{social_proof}" if rating > 0 else ""
+
+        if tone == "educativo":
+            tip = random.choice(cls._EDUCATIONAL_TIPS)
+            opener = f"{hook}\n\n{tip}\n\n"
+        else:
+            use_story = random.random() < 0.5
+            opener = f"{story}\n\n" if use_story else f"{hook}!\n\n"
 
         caption = opener + f"📦 {name}\n"
         if price_line:

@@ -49,6 +49,7 @@ import {
 const TONES = [
     { value: "oferta", label: "Oferta direta" },
     { value: "storytelling", label: "Storytelling" },
+    { value: "educativo", label: "Educativo" },
     { value: "humor", label: "Humor" },
     { value: "urgencia", label: "Urgência" },
 ];

@@ -7,6 +7,7 @@ publicação nos horários de pico definidos, sem intervenção manual.
 O FacebookSchedulerService (já existente) publica quando chega a hora.
 """
 
+import random
 from datetime import datetime, timedelta
 
 from app.core.logger import logger
@@ -19,6 +20,23 @@ from app.services.notification_service import NotificationService
 
 PEAK_HOURS = [7, 9, 12, 16, 19]
 PRODUCTS_PER_DAY = len(PEAK_HOURS)
+
+# Rotação de tom dos posts automáticos: ~70% venda direta (oferta/urgencia),
+# ~30% educativo/storytelling — pra não parecer só propaganda o dia todo.
+TONE_WEIGHTS = {
+    "oferta": 45,
+    "urgencia": 25,
+    "educativo": 20,
+    "storytelling": 10,
+}
+
+
+def _pick_tone() -> str:
+    return random.choices(
+        population=list(TONE_WEIGHTS.keys()),
+        weights=list(TONE_WEIGHTS.values()),
+        k=1,
+    )[0]
 
 
 def run_daily_auto_schedule() -> int:
@@ -55,13 +73,16 @@ def run_daily_auto_schedule() -> int:
             return 0
 
         for product, hour in zip(products, PEAK_HOURS):
-            content = ContentGeneratorService.generate({
-                "name": product.name,
-                "price": product.price,
-                "commission": product.commission,
-                "rating": product.rating,
-                "sales": product.sales,
-            })
+            content = ContentGeneratorService.generate(
+                {
+                    "name": product.name,
+                    "price": product.price,
+                    "commission": product.commission,
+                    "rating": product.rating,
+                    "sales": product.sales,
+                },
+                tone=_pick_tone(),
+            )
             scheduled_at = datetime.combine(today, datetime.min.time()) + timedelta(hours=hour)
             if scheduled_at < datetime.utcnow():
                 scheduled_at += timedelta(days=1)
