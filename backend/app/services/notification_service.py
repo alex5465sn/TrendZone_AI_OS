@@ -19,6 +19,14 @@ from app.models.user import User
 from app.services.base_service import BaseService
 
 
+def send_push_notification(title: str, message: str, tags: str = "info") -> None:
+    """
+    Notificação push simples e best-effort (usada pelo FacebookSchedulerService
+    para avisos rápidos de publicação/erro que não exigem usuário/DB).
+    """
+    logger.info(f"[PUSH][{tags}] {title}: {message}")
+
+
 class NotificationService(BaseService):
     """Serviço centralizado de notificações."""
 
