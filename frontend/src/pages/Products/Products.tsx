@@ -165,6 +165,7 @@ export default function Products() {
             rating_star: Number(product.ratingStar) || 0,
             sales: Number(product.sales) || 0,
             offer_link: product.offerLink,
+            image_url: product.imageUrl,
         });
 
         return { product, result };

@@ -35,6 +35,7 @@ export interface PromotePayload {
     rating_star?: number;
     sales?: number;
     offer_link?: string;
+    image_url?: string;
     tone?: string;
 }
 

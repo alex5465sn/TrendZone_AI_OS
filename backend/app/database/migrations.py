@@ -56,6 +56,9 @@ EXTRA_COLUMNS = {
         ("base_score", "FLOAT NOT NULL DEFAULT 0.0"),
         ("performance_adjustment", "FLOAT NOT NULL DEFAULT 0.0"),
     ],
+    "published_posts": [
+        ("product_image", "VARCHAR(500) NOT NULL DEFAULT ''"),
+    ],
 }
 
 

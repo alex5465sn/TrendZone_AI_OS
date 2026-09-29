@@ -16,4 +16,5 @@ class PromoteRequest(BaseModel):
     rating_star: float = 0
     sales: int = 0
     offer_link: str = ""
+    image_url: str = ""
     tone: str = "oferta"

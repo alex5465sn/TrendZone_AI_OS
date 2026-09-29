@@ -151,6 +151,7 @@ def promote(
         tracking_code=tracking_code,
         product_item_id=payload.item_id,
         product_name=payload.product_name,
+        product_image=payload.image_url,
         destination_url=payload.offer_link,
         channel="marketplace",
         post_format="texto",

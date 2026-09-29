@@ -10,6 +10,7 @@ class PublishedPost(BaseModel):
     tracking_code: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
     product_item_id: Mapped[int] = mapped_column(Integer, nullable=False)
     product_name: Mapped[str] = mapped_column(String(300), default="")
+    product_image: Mapped[str] = mapped_column(String(500), default="")
     destination_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     channel: Mapped[str] = mapped_column(String(30), default="facebook")
     post_format: Mapped[str] = mapped_column(String(20), default="texto")
