@@ -179,7 +179,7 @@ def generate_text(
     if not product:
         return ResponseBuilder.error(message="Produto não encontrado.", status_code=404)
 
-    content = ContentGeneratorService.generate(
+    content = ContentGeneratorService.generate_smart(
         {
             "name": product.name,
             "price": float(product.price or 0),

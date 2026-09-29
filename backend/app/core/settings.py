@@ -75,6 +75,12 @@ class Settings(BaseSettings):
 
     OPENROUTER_MODEL: str = "openai/gpt-4o-mini"
 
+    # Liga/desliga a geração de legenda (hook/corpo/CTA) por IA nos posts
+    # automáticos. Se desligado ou se a chamada falhar, usa os templates
+    # prontos (sem custo de API). Desligado por padrão para não consumir
+    # crédito do OpenRouter sem o usuário decidir ativar.
+    AI_CONTENT_GENERATION_ENABLED: bool = False
+
     OPENAI_API_KEY: str = ""
 
     ANTHROPIC_API_KEY: str = ""

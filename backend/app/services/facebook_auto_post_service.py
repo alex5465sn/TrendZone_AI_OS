@@ -74,7 +74,7 @@ def run_daily_auto_schedule() -> int:
             return 0
 
         for product, hour in zip(products, PEAK_HOURS):
-            content = ContentGeneratorService.generate(
+            content = ContentGeneratorService.generate_smart(
                 {
                     "name": product.name,
                     "price": product.price,

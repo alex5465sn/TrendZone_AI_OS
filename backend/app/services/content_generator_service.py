@@ -14,9 +14,46 @@ o material para que um humano revise e
 publique/envie manualmente.
 """
 
+import json
 import random
 
+from app.core.settings import settings
+from app.services import ai_agent_service
 from app.services.base_service import BaseService
+
+AI_SYSTEM_PROMPT = """Você é um redator especialista em copywriting para posts de \
+divulgação de produtos afiliados da Shopee (achadinhos, ofertas). Sua tarefa é \
+escrever um HOOK (gancho), um CORPO curto e uma CTA (chamada para ação) em \
+português do Brasil, para o produto informado pelo usuário.
+
+REGRAS PARA O HOOK (primeira linha, gera o "para de rolar o feed"):
+- PROIBIDO usar aberturas genéricas e batidas, ex: "Confira essa oferta incrível", \
+"Não perca essa promoção", "Olha que produto legal".
+- PROIBIDO frases passivas/óbvias, ex: "Você sabia que...".
+- PREFIRA viés de negatividade/urgência real, ex: "Para de comprar isso errado", \
+"Isso aqui quase saiu de linha".
+- PREFIRA curiosidade e especificidade concreta (número, resultado, comparação), \
+ex: "Testei 5 desses e só 1 valeu a pena", "Achei por menos da metade do preço normal".
+- O hook deve ter no máximo ~60 caracteres e provocar uma reação de "Espera, o quê?".
+
+REGRAS PARA A CTA (chamada final, gera a ação):
+- PROIBIDO CTAs vazias, ex: "Espero que tenham gostado!", "Link na bio" sozinho.
+- PREFIRA imperativo + benefício direto, ex: "Salva esse post antes que o preço suba", \
+"Comenta 'QUERO' que te mando o link", "Clica agora, o estoque é curto".
+- A CTA deve deixar claro o próximo passo E o benefício de tomar essa ação.
+
+FORMATO DE SAÍDA:
+Responda APENAS com um JSON válido, sem markdown, sem texto fora do JSON, no \
+formato exato:
+{"hook": "...", "body": "...", "cta": "...", "hashtags": ["...", "...", "..."]}
+
+- "hook": a primeira linha, seguindo as regras acima.
+- "body": 1 a 3 frases curtas destacando o produto (pode citar preço, avaliação \
+ou vendas se fizerem sentido), tom natural, sem exagero de emojis.
+- "cta": a chamada final, seguindo as regras acima.
+- "hashtags": lista de 6 a 8 hashtags em português, sem espaços, relevantes ao \
+produto e ao nicho de achadinhos/ofertas.
+"""
 
 
 class ContentGeneratorService(BaseService):
@@ -207,6 +244,106 @@ class ContentGeneratorService(BaseService):
             "estimated_commission": commission,
             "tone": tone,
         }
+
+    # =====================================================
+    # GERAÇÃO INTELIGENTE (IA com fallback pro template)
+    # =====================================================
+
+    @classmethod
+    def generate_smart(
+        cls,
+        product: dict,
+        tone: str = "oferta",
+    ) -> dict:
+        """
+        Tenta gerar o conteúdo com IA (hook/corpo/CTA mais persuasivos e
+        únicos). Se a IA estiver desligada nas configurações, sem chave de
+        API, ou a chamada falhar/vier em formato inesperado, cai de volta
+        para os templates prontos em `generate()` — nunca trava o fluxo de
+        agendamento automático.
+        """
+        if settings.AI_CONTENT_GENERATION_ENABLED:
+            ai_content = cls.generate_with_ai(product, tone)
+            if ai_content is not None:
+                return ai_content
+
+        return cls.generate(product, tone=tone)
+
+    @classmethod
+    def generate_with_ai(
+        cls,
+        product: dict,
+        tone: str = "oferta",
+    ) -> dict | None:
+        """
+        Gera hook, corpo, CTA e hashtags usando um modelo de linguagem via
+        OpenRouter, seguindo regras de copywriting (evita aberturas
+        genéricas, usa curiosidade/especificidade no hook, CTA imperativa
+        com benefício claro). Retorna None em qualquer falha, para quem
+        chamar cair de volta no template.
+        """
+        name = product.get("name", "Produto")
+        price = product.get("price", 0)
+        rating = product.get("rating", 0)
+        sales = product.get("sales", 0)
+
+        user_message = (
+            f"Produto: {name}\n"
+            f"Preço: R$ {price:.2f}\n"
+            f"Avaliação: {rating:.1f} de 5\n"
+            f"Vendas: {sales}\n"
+            f"Tom desejado: {tone}\n"
+            f"Gere o JSON conforme as instruções."
+        )
+
+        try:
+            result = ai_agent_service.generate_reply(
+                provider="openrouter",
+                model_name=settings.OPENROUTER_MODEL,
+                system_prompt=AI_SYSTEM_PROMPT,
+                user_message=user_message,
+            )
+            if not result.get("ok"):
+                cls.log_info(f"IA de conteúdo indisponível, usando template: {result.get('error')}")
+                return None
+
+            raw = result["reply"].strip()
+            if raw.startswith("```"):
+                raw = raw.strip("`")
+                raw = raw.split("\n", 1)[1] if "\n" in raw else raw
+                if raw.lower().startswith("json"):
+                    raw = raw.split("\n", 1)[1] if "\n" in raw else ""
+
+            data = json.loads(raw)
+            hook = str(data["hook"]).strip()
+            body = str(data["body"]).strip()
+            cta = str(data["cta"]).strip()
+            hashtags_list = data["hashtags"]
+            hashtags = " ".join(
+                h if h.startswith("#") else f"#{h}" for h in hashtags_list
+            )
+
+            if not hook or not body or not cta or not hashtags_list:
+                return None
+
+            title = f"{hook}: {name}"
+            caption = f"{hook}\n\n{body}\n\n{cta}"
+
+            cls.log_success("Conteúdo gerado com IA (hook/CTA personalizados).")
+
+            return {
+                "title": title,
+                "caption": caption,
+                "hashtags": hashtags,
+                "target_audience": cls._suggest_audience(product),
+                "channel": cls._suggest_channel(product),
+                "estimated_commission": product.get("commission", 0),
+                "tone": tone,
+                "ai_generated": True,
+            }
+        except Exception as exc:
+            cls.log_info(f"Falha ao gerar conteúdo com IA, usando template: {exc}")
+            return None
 
     # =====================================================
     # HASHTAGS
