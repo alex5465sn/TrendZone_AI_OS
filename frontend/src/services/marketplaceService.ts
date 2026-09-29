@@ -22,6 +22,42 @@ export interface ShopeeProductNode {
     shopType: number[];
     periodStartTime: number;
     periodEndTime: number;
+    score?: number | null;
+    decision?: string | null;
+    alreadyTracked?: boolean;
+}
+
+export interface PromotePayload {
+    item_id: number;
+    product_name: string;
+    price?: number;
+    commission_rate?: number;
+    rating_star?: number;
+    sales?: number;
+    offer_link?: string;
+    tone?: string;
+}
+
+export interface PromoteResult {
+    content: {
+        title?: string;
+        caption?: string;
+        hashtags?: string;
+        target_audience?: string;
+        channel?: string;
+        link?: string;
+        ai_generated?: boolean;
+    };
+    tracking_code: string;
+    tracking_url: string;
+    full_text: string;
+    whatsapp_share_url: string;
+    facebook_share_url: string;
+}
+
+export async function promoteProduct(payload: PromotePayload): Promise<PromoteResult> {
+    const response = await api.post("/marketplace/promote", payload);
+    return response.data.data as PromoteResult;
 }
 
 export interface ShopeeProductResponse {

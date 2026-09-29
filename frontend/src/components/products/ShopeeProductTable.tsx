@@ -12,21 +12,32 @@ import {
     Chip,
     IconButton,
     Tooltip,
+    Checkbox,
 } from "@mui/material";
 
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import AddIcon from "@mui/icons-material/Add";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CampaignIcon from "@mui/icons-material/Campaign";
 
 import type { ShopeeProductNode } from "../../services/marketplaceService";
 
 interface ShopeeProductTableProps {
     products: ShopeeProductNode[];
     onAdd?: (product: ShopeeProductNode) => void;
+    onPromote?: (product: ShopeeProductNode) => void;
+    selectedIds?: Set<number>;
+    onToggleSelect?: (itemId: number) => void;
+    onToggleSelectAll?: () => void;
 }
 
 export default function ShopeeProductTable({
     products,
     onAdd,
+    onPromote,
+    selectedIds,
+    onToggleSelect,
+    onToggleSelectAll,
 }: ShopeeProductTableProps) {
 
     function formatCurrency(value: string) {
@@ -56,6 +67,15 @@ export default function ShopeeProductTable({
 
     }
 
+    function colorForDecision(label: string) {
+
+        if (label === "PROMOVER") return "success" as const;
+        if (label === "TESTAR") return "warning" as const;
+        if (label === "OBSERVAR") return "info" as const;
+        return "error" as const;
+
+    }
+
     return (
 
         <TableContainer
@@ -72,6 +92,16 @@ export default function ShopeeProductTable({
                 <TableHead>
 
                     <TableRow>
+                        {onToggleSelect && (
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    sx={{ color: "#94A3B8" }}
+                                    checked={products.length > 0 && selectedIds?.size === products.length}
+                                    indeterminate={!!selectedIds && selectedIds.size > 0 && selectedIds.size < products.length}
+                                    onChange={() => onToggleSelectAll?.()}
+                                />
+                            </TableCell>
+                        )}
                         <TableCell sx={{ color: "#94A3B8" }}>ID</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Produto</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Loja</TableCell>
@@ -88,8 +118,10 @@ export default function ShopeeProductTable({
 
                     {products.map((product) => {
 
-                        const score = Number(product.ratingStar) * 20;
-                        const decision = getDecision(score);
+                        const score = product.score ?? Number(product.ratingStar) * 20;
+                        const decisionLabel = product.decision ?? getDecision(score).label;
+                        const decision = { label: decisionLabel, color: colorForDecision(decisionLabel) };
+                        const canPromote = decisionLabel === "PROMOVER" || decisionLabel === "TESTAR";
 
                         return (
 
@@ -102,6 +134,16 @@ export default function ShopeeProductTable({
                                     },
                                 }}
                             >
+
+                                {onToggleSelect && (
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            sx={{ color: "#94A3B8" }}
+                                            checked={!!selectedIds?.has(product.itemId)}
+                                            onChange={() => onToggleSelect(product.itemId)}
+                                        />
+                                    </TableCell>
+                                )}
 
                                 <TableCell>
                                     <Chip
@@ -141,12 +183,20 @@ export default function ShopeeProductTable({
                                             >
                                                 {product.productName}
                                             </Typography>
-                                            <Chip
-                                                label={decision.label}
-                                                color={decision.color}
-                                                size="small"
-                                                sx={{ mt: 0.5, fontWeight: 600 }}
-                                            />
+                                            <Tooltip title={canPromote && onPromote ? "Clique para gerar o conteúdo de divulgação" : ""}>
+                                                <Chip
+                                                    label={decision.label}
+                                                    color={decision.color}
+                                                    size="small"
+                                                    icon={canPromote && onPromote ? <CampaignIcon fontSize="small" /> : undefined}
+                                                    onClick={canPromote && onPromote ? () => onPromote(product) : undefined}
+                                                    sx={{
+                                                        mt: 0.5,
+                                                        fontWeight: 600,
+                                                        cursor: canPromote && onPromote ? "pointer" : "default",
+                                                    }}
+                                                />
+                                            </Tooltip>
                                         </Box>
                                     </Box>
                                 </TableCell>
@@ -207,16 +257,26 @@ export default function ShopeeProductTable({
                                             </IconButton>
                                         </Tooltip>
 
-                                        {onAdd && (
-                                            <Tooltip title="Adicionar ao Tracker">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => onAdd(product)}
-                                                    sx={{ color: "#10B981" }}
-                                                >
-                                                    <AddIcon fontSize="small" />
-                                                </IconButton>
+                                        {product.alreadyTracked ? (
+                                            <Tooltip title="Já está no banco (a IA adicionou automaticamente)">
+                                                <span>
+                                                    <IconButton size="small" disabled sx={{ color: "#10B981" }}>
+                                                        <CheckCircleIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
                                             </Tooltip>
+                                        ) : (
+                                            onAdd && (
+                                                <Tooltip title="Adicionar ao Tracker">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => onAdd(product)}
+                                                        sx={{ color: "#10B981" }}
+                                                    >
+                                                        <AddIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )
                                         )}
 
                                     </Box>

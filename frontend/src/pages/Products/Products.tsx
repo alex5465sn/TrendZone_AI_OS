@@ -9,17 +9,30 @@ import {
     TextField,
     Grid,
     Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StarIcon from "@mui/icons-material/Star";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import CloseIcon from "@mui/icons-material/Close";
 
 import ShopeeProductTable from "../../components/products/ShopeeProductTable";
 import {
     searchShopeeProducts,
+    promoteProduct,
     type ShopeeProductNode,
+    type PromoteResult,
 } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
 import { CATEGORIES } from "../../constants/categories";
@@ -31,6 +44,13 @@ export default function Products() {
     const [error, setError] = useState("");
     const [keyword, setKeyword] = useState("tendencia");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [promoting, setPromoting] = useState(false);
+    const [promoteResults, setPromoteResults] = useState<
+        { product: ShopeeProductNode; result: PromoteResult }[]
+    >([]);
+    const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
+    const [promoteError, setPromoteError] = useState("");
 
     const loadProducts = useCallback(async (search: string) => {
 
@@ -108,6 +128,93 @@ export default function Products() {
             }
 
         }
+
+    }
+
+    function toggleSelect(itemId: number) {
+
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(itemId)) {
+                next.delete(itemId);
+            } else {
+                next.add(itemId);
+            }
+            return next;
+        });
+
+    }
+
+    function toggleSelectAll() {
+
+        setSelectedIds((prev) =>
+            prev.size === products.length
+                ? new Set()
+                : new Set(products.map((p) => p.itemId))
+        );
+
+    }
+
+    async function promoteOne(product: ShopeeProductNode) {
+
+        const result = await promoteProduct({
+            item_id: product.itemId,
+            product_name: product.productName,
+            price: Number(product.price) || 0,
+            commission_rate: Number(product.commissionRate) || 0,
+            rating_star: Number(product.ratingStar) || 0,
+            sales: Number(product.sales) || 0,
+            offer_link: product.offerLink,
+        });
+
+        return { product, result };
+
+    }
+
+    async function handlePromote(product: ShopeeProductNode) {
+
+        setPromoteError("");
+        setPromoting(true);
+        setPromoteDialogOpen(true);
+
+        try {
+            const entry = await promoteOne(product);
+            setPromoteResults([entry]);
+        } catch (err) {
+            console.error(err);
+            setPromoteError("Erro ao gerar conteúdo de divulgação para o produto.");
+            setPromoteResults([]);
+        } finally {
+            setPromoting(false);
+        }
+
+    }
+
+    async function handlePromoteSelected() {
+
+        const selected = products.filter((p) => selectedIds.has(p.itemId));
+        if (selected.length === 0) return;
+
+        setPromoteError("");
+        setPromoting(true);
+        setPromoteDialogOpen(true);
+        setPromoteResults([]);
+
+        try {
+            const entries = await Promise.all(selected.map((product) => promoteOne(product)));
+            setPromoteResults(entries);
+        } catch (err) {
+            console.error(err);
+            setPromoteError("Erro ao gerar conteúdo de divulgação para um ou mais produtos.");
+        } finally {
+            setPromoting(false);
+        }
+
+    }
+
+    function copyText(text: string) {
+
+        navigator.clipboard.writeText(text).catch(() => undefined);
 
     }
 
@@ -282,10 +389,116 @@ export default function Products() {
                 </Alert>
             )}
 
+            {selectedIds.size > 0 && (
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        backgroundColor: "#1E293B",
+                    }}
+                >
+                    <Typography color="#F8FAFC">
+                        {selectedIds.size} produto(s) selecionado(s)
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<CampaignIcon />}
+                        onClick={handlePromoteSelected}
+                        sx={{ backgroundColor: "#10B981", textTransform: "none" }}
+                    >
+                        Divulgar selecionados
+                    </Button>
+                </Box>
+            )}
+
             <ShopeeProductTable
                 products={products}
                 onAdd={handleAdd}
+                onPromote={handlePromote}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
             />
+
+            <Dialog
+                open={promoteDialogOpen}
+                onClose={() => setPromoteDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    Divulgar produto(s)
+                    <IconButton onClick={() => setPromoteDialogOpen(false)}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {promoting && (
+                        <Box display="flex" justifyContent="center" py={4}>
+                            <CircularProgress />
+                        </Box>
+                    )}
+
+                    {promoteError && <Alert severity="error" sx={{ mb: 2 }}>{promoteError}</Alert>}
+
+                    {!promoting && promoteResults.map(({ product, result }) => (
+                        <Box
+                            key={product.itemId}
+                            sx={{ mb: 3, pb: 3, borderBottom: "1px solid #1E293B" }}
+                        >
+                            <Typography fontWeight="bold" mb={1}>
+                                {product.productName}
+                            </Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: "pre-line", mb: 2 }}>
+                                {result.full_text}
+                            </Typography>
+                            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                <Button
+                                    size="small"
+                                    startIcon={<ContentCopyIcon />}
+                                    onClick={() => copyText(result.full_text)}
+                                >
+                                    Copiar texto
+                                </Button>
+                                <Button
+                                    size="small"
+                                    startIcon={<WhatsAppIcon />}
+                                    href={result.whatsapp_share_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    WhatsApp
+                                </Button>
+                                <Button
+                                    size="small"
+                                    startIcon={<FacebookIcon />}
+                                    href={result.facebook_share_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Facebook
+                                </Button>
+                                <Button
+                                    size="small"
+                                    startIcon={<OpenInNewIcon />}
+                                    href={result.tracking_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Link de rastreamento
+                                </Button>
+                            </Box>
+                        </Box>
+                    ))}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPromoteDialogOpen(false)}>Fechar</Button>
+                </DialogActions>
+            </Dialog>
 
         </Box>
 
