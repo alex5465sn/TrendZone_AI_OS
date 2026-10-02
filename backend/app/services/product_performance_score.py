@@ -23,6 +23,7 @@ from app.core.logger import logger
 from app.database.session import SessionLocal
 from app.models.channel_tracking import ChannelTracking
 from app.models.product import Product
+from app.models.sale import Sale
 from app.services.base_service import BaseService
 from app.services.decision_engine import DecisionEngine
 
@@ -45,12 +46,20 @@ class ProductPerformanceScore(BaseService):
     # taxa de conversao do produto frente a media da plataforma.
     ADJUSTMENT_SCALE = 40.0
 
+    # Vendas reais confirmadas pela Shopee sao um sinal muito mais
+    # forte que um simples clique rastreado internamente: cada venda
+    # confirmada soma um bonus direto ao score, independente de ter
+    # ou nao volume de cliques suficiente para o ajuste por taxa.
+    REAL_SALE_BONUS = 3.0
+    REAL_SALE_MAX_BONUS = 20.0
+
     @classmethod
     def recalculate_all(cls, db: Session) -> dict:
         """
-        Recalcula o ajuste de performance de todos os produtos
-        com dados suficientes em Canais & SubIDs e atualiza
-        score/recommendation em "products".
+        Recalcula o ajuste de performance de todos os produtos com
+        dados suficientes em Canais & SubIDs e/ou vendas reais
+        confirmadas na Shopee, e atualiza score/recommendation
+        em "products".
         """
 
         cls.log_info("Recalculando Score com base em performance real...")
@@ -70,26 +79,38 @@ class ProductPerformanceScore(BaseService):
             .all()
         )
 
-        if not rows:
-            cls.log_info("Sem dados suficientes de cliques ainda. Nada a ajustar.")
+        baseline = cls._baseline_conversion_rate(rows) if rows else 0.0
+
+        click_adjustments = {
+            row.product_id: cls._adjustment(row.conversions / row.clicks, baseline)
+            for row in rows
+        }
+        sales_adjustments = cls._real_sales_adjustment(db)
+
+        product_ids = set(click_adjustments) | set(sales_adjustments)
+
+        if not product_ids:
+            cls.log_info("Sem dados suficientes de cliques ou vendas reais ainda. Nada a ajustar.")
             return {
                 "products_analyzed": 0,
                 "products_boosted": 0,
                 "products_penalized": 0,
+                "products_with_real_sales": 0,
             }
-
-        baseline = cls._baseline_conversion_rate(rows)
 
         boosted = 0
         penalized = 0
 
-        for row in rows:
-            product = db.query(Product).filter(Product.id == row.product_id).first()
+        for product_id in product_ids:
+            product = db.query(Product).filter(Product.id == product_id).first()
             if not product:
                 continue
 
-            conversion_rate = row.conversions / row.clicks
-            adjustment = cls._adjustment(conversion_rate, baseline)
+            adjustment = round(
+                click_adjustments.get(product_id, 0.0)
+                + sales_adjustments.get(product_id, 0.0),
+                2,
+            )
 
             product.performance_adjustment = adjustment
             product.score = round((product.base_score or 0.0) + adjustment, 2)
@@ -103,19 +124,50 @@ class ProductPerformanceScore(BaseService):
         db.commit()
 
         summary = {
-            "products_analyzed": len(rows),
+            "products_analyzed": len(product_ids),
             "products_boosted": boosted,
             "products_penalized": penalized,
+            "products_with_real_sales": len(sales_adjustments),
         }
 
         cls.log_success(
             "Score reponderado: "
             f"{summary['products_analyzed']} produtos analisados, "
             f"{summary['products_boosted']} valorizados, "
-            f"{summary['products_penalized']} penalizados."
+            f"{summary['products_penalized']} penalizados, "
+            f"{summary['products_with_real_sales']} com vendas reais confirmadas."
         )
 
         return summary
+
+    @classmethod
+    def _real_sales_adjustment(cls, db: Session) -> dict[int, float]:
+        """
+        Bonus de score por vendas reais confirmadas na Shopee,
+        por produto (quando a venda pode ser atribuida a um
+        produto conhecido via subId/utm_content).
+        """
+        rows = (
+            db.query(
+                Sale.product_id,
+                func.count(Sale.id).label("confirmed_sales"),
+            )
+            .filter(
+                Sale.product_id.isnot(None),
+                Sale.status == "confirmada",
+                Sale.is_active == True,  # noqa: E712
+            )
+            .group_by(Sale.product_id)
+            .all()
+        )
+
+        return {
+            row.product_id: round(
+                min(row.confirmed_sales * cls.REAL_SALE_BONUS, cls.REAL_SALE_MAX_BONUS),
+                2,
+            )
+            for row in rows
+        }
 
     @classmethod
     def _baseline_conversion_rate(cls, rows) -> float:

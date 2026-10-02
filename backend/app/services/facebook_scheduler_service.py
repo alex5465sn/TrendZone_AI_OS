@@ -16,10 +16,12 @@ from app.repositories.product_repository import ProductRepository
 from app.integrations.facebook.facebook_client import FacebookClient
 from app.services.facebook_auto_post_service import run_daily_auto_schedule
 from app.services.product_performance_score import run_performance_recalculation
+from app.services.sales_tracker_service import run_sales_sync
 from app.services.notification_service import send_push_notification
 
 CHECK_INTERVAL_SECONDS = 60
 AUTO_SCHEDULE_INTERVAL_CYCLES = 60
+SALES_SYNC_INTERVAL_CYCLES = 30
 
 
 class FacebookSchedulerService:
@@ -27,20 +29,63 @@ class FacebookSchedulerService:
     _task: asyncio.Task | None = None
     _running = False
 
+    # Observabilidade dos jobs de fundo: sem isso, um job que para de
+    # ser chamado (como aconteceu com a sincronizacao de vendas) fica
+    # invisivel ate alguem notar na "unha" que os dados pararam de
+    # aparecer. Com isso da pra expor "ultima execucao" de cada job.
+    _job_status: dict[str, dict] = {
+        "sales_sync": {"last_run_at": None, "last_error": None},
+        "daily_auto_schedule": {"last_run_at": None, "last_error": None},
+        "performance_recalculation": {"last_run_at": None, "last_error": None},
+    }
+
+    @classmethod
+    def _run_job(cls, name: str, fn) -> None:
+        try:
+            fn()
+            cls._job_status[name] = {
+                "last_run_at": datetime.utcnow().isoformat(),
+                "last_error": None,
+            }
+        except Exception as e:
+            logger.warning(f"[FB_SCHEDULER] Erro no job '{name}': {e}")
+            cls._job_status[name] = {
+                "last_run_at": datetime.utcnow().isoformat(),
+                "last_error": str(e)[:300],
+            }
+
+    @classmethod
+    def get_health(cls) -> dict:
+        """
+        Status da ultima execucao de cada job de fundo, para
+        detectar silenciosamente um job que parou de rodar
+        (sem precisar esperar o usuario notar na pratica).
+        """
+        now = datetime.utcnow()
+        health = {}
+        for name, status in cls._job_status.items():
+            last_run_at = status.get("last_run_at")
+            seconds_since = None
+            if last_run_at:
+                seconds_since = (now - datetime.fromisoformat(last_run_at)).total_seconds()
+            health[name] = {
+                "last_run_at": last_run_at,
+                "seconds_since_last_run": seconds_since,
+                "last_error": status.get("last_error"),
+                "never_ran": last_run_at is None,
+            }
+        health["scheduler_running"] = cls._running
+        return health
+
     @classmethod
     def start(cls):
         if cls._running:
             return
         cls._running = True
         cls._task = asyncio.create_task(cls._loop())
-        try:
-            run_daily_auto_schedule()
-        except Exception as e:
-            logger.warning(f"[FB_SCHEDULER] Erro no agendamento automatico inicial: {e}")
-        try:
-            run_performance_recalculation()
-        except Exception as e:
-            logger.warning(f"[FB_SCHEDULER] Erro no recalculo inicial de performance: {e}")
+        cls._run_job("daily_auto_schedule", run_daily_auto_schedule)
+        cls._run_job("sales_sync", run_sales_sync)
+        cls._run_job("performance_recalculation", run_performance_recalculation)
         logger.info("[FB_SCHEDULER] Servico iniciado.")
 
     @classmethod
@@ -57,9 +102,11 @@ class FacebookSchedulerService:
             try:
                 cls._run_check()
                 cycle += 1
+                if cycle % SALES_SYNC_INTERVAL_CYCLES == 0:
+                    cls._run_job("sales_sync", run_sales_sync)
                 if cycle % AUTO_SCHEDULE_INTERVAL_CYCLES == 0:
-                    run_daily_auto_schedule()
-                    run_performance_recalculation()
+                    cls._run_job("daily_auto_schedule", run_daily_auto_schedule)
+                    cls._run_job("performance_recalculation", run_performance_recalculation)
             except Exception as e:
                 logger.warning(f"[FB_SCHEDULER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)

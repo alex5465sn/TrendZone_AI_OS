@@ -15,6 +15,7 @@ from app.dependencies import get_admin_user
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.product_repository import ProductRepository
+from app.services.facebook_scheduler_service import FacebookSchedulerService
 from app.api.response import ResponseBuilder
 
 router = APIRouter(
@@ -248,3 +249,18 @@ def get_system_stats(
             "system_status": "online",
         },
     )
+
+
+@router.get("/jobs-health")
+def get_jobs_health(
+    current_user: User = Depends(get_admin_user),
+):
+    """
+    Saude dos jobs de fundo (sincronizacao de vendas, agendamento
+    automatico, recalculo de score): quando cada um rodou pela
+    ultima vez e se a ultima execucao deu erro.
+
+    Criado para detectar automaticamente o tipo de falha silenciosa
+    em que um job existe no codigo mas nunca e chamado por ninguem.
+    """
+    return ResponseBuilder.success(data=FacebookSchedulerService.get_health())

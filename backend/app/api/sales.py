@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.models.sale import Sale
 from app.repositories.sale_repository import SaleRepository
 from app.repositories.campaign_repository import CampaignRepository
 from app.services.sales_tracker_service import SalesTrackerService
@@ -66,71 +65,16 @@ def sync_conversions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    nodes = SalesTrackerService.fetch_conversions(
+    result = SalesTrackerService.sync_and_persist(
+        db,
         days_back=days,
         credentials=_shopee_credentials(db, current_user),
+        user_id=current_user.id,
     )
 
-    new_count = 0
-    updated_count = 0
-
-    for node in nodes:
-        parsed = SalesTrackerService.parse_conversion(node)
-        existing = SaleRepository.get_by_conversion_id(db, parsed["conversion_id"])
-
-        if existing:
-            if existing.user_id is None:
-                existing.user_id = current_user.id
-
-            existing.order_status = parsed["order_status"]
-            existing.total_commission = parsed["total_commission"]
-            existing.net_commission = parsed["net_commission"]
-            existing.seller_commission = parsed["seller_commission"]
-            existing.shopee_commission = parsed["shopee_commission"]
-            existing.updated_at = datetime.utcnow()
-
-            if parsed["order_status"] in ("completed", "settled"):
-                existing.status = "confirmada"
-            elif parsed["order_status"] in ("cancelled", "refunded"):
-                existing.status = "cancelada"
-
-            SaleRepository.update(db, existing)
-            updated_count += 1
-        else:
-            status = "pendente"
-            if parsed["order_status"] in ("completed", "settled"):
-                status = "confirmada"
-            elif parsed["order_status"] in ("cancelled", "refunded"):
-                status = "cancelada"
-
-            sale = Sale(
-                conversion_id=parsed["conversion_id"],
-                user_id=current_user.id,
-                order_id=parsed["order_id"],
-                order_status=parsed["order_status"],
-                shop_type=parsed["shop_type"],
-                buyer_type=parsed["buyer_type"],
-                device=parsed["device"],
-                product_type=parsed["product_type"],
-                click_time=parsed["click_time"],
-                purchase_time=parsed["purchase_time"],
-                total_commission=parsed["total_commission"],
-                seller_commission=parsed["seller_commission"],
-                shopee_commission=parsed["shopee_commission"],
-                net_commission=parsed["net_commission"],
-                utm_content=parsed["utm_content"],
-                status=status,
-            )
-            SaleRepository.create(db, sale)
-            new_count += 1
-
     return ResponseBuilder.success(
-        data={
-            "synced_from_shopee": len(nodes),
-            "new_sales": new_count,
-            "updated_sales": updated_count,
-        },
-        message=f"Sincronizado: {new_count} nova(s), {updated_count} atualizada(s).",
+        data=result,
+        message=f"Sincronizado: {result['new_sales']} nova(s), {result['updated_sales']} atualizada(s).",
     )
 
 

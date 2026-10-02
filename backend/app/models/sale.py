@@ -1,5 +1,6 @@
 from sqlalchemy import (
     Float,
+    ForeignKey,
     Integer,
     String,
     UniqueConstraint,
@@ -24,6 +25,9 @@ class Sale(BaseModel):
     )
     user_id: Mapped[int | None] = mapped_column(
         Integer, nullable=True, default=None,
+    )
+    product_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("products.id"), nullable=True, default=None,
     )
     conversion_id: Mapped[str] = mapped_column(
         String(100), nullable=False,

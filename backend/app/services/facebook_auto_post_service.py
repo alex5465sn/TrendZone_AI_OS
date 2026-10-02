@@ -18,6 +18,7 @@ from app.models.scheduled_post import ScheduledPost
 from app.services.content_generator_service import ContentGeneratorService
 from app.services.image_generator_service import generate_cover_image
 from app.services.notification_service import NotificationService
+from app.services.sales_tracker_service import SalesTrackerService
 
 PEAK_HOURS = [7, 9, 12, 16, 19]
 PRODUCTS_PER_DAY = len(PEAK_HOURS)
@@ -30,6 +31,31 @@ TONE_WEIGHTS = {
     "educativo": 20,
     "storytelling": 10,
 }
+
+
+def _build_tracking_link(product) -> str:
+    """
+    Gera um link curto da Shopee com subId = item_id do produto.
+
+    Esse subId e o que a Shopee devolve como "utmContent" no
+    ConversionReport, permitindo casar uma venda real com o
+    produto que a gerou (sem isso o Score nunca aprende com
+    vendas reais, so com cliques do proprio TrendZone).
+
+    Se a geracao falhar, cai no link de oferta padrao (comportamento
+    anterior) para nao travar o agendamento do post.
+    """
+    try:
+        result = SalesTrackerService.generate_tracking_link(
+            origin_url=product.offer_link,
+            sub_ids=[str(product.item_id)],
+        )
+        if result.get("short_link"):
+            return result["short_link"]
+    except Exception as e:
+        logger.warning(f"[FB_AUTO_POST] Erro ao gerar link rastreavel: {e}")
+
+    return product.offer_link or ""
 
 
 def _pick_tone() -> str:
@@ -98,7 +124,7 @@ def run_daily_auto_schedule() -> int:
             post = ScheduledPost(
                 product_item_id=product.item_id,
                 message=f"{content['caption']}\n\n{content['hashtags']}",
-                link=product.offer_link or "",
+                link=_build_tracking_link(product),
                 image_url=image_url,
                 scheduled_at=scheduled_at,
                 status="pendente",
