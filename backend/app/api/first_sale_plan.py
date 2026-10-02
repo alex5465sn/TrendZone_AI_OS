@@ -18,7 +18,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.first_sale_plan import FirstSalePlan
 from app.models.published_post import PublishedPost
-from app.models.channel_tracking import ChannelTracking
+from app.models.sale import Sale
 from app.repositories.first_sale_plan_repository import FirstSalePlanRepository
 from app.api.response import ResponseBuilder
 
@@ -45,23 +45,32 @@ def get_plan(
     """Obtém o plano de primeira venda do usuário."""
     plan = FirstSalePlanRepository.get_or_create(db, current_user.id)
 
-    # Calcula métricas em tempo real
-    posts = db.query(PublishedPost).filter(
-        PublishedPost.user_id == current_user.id
-    ).all()
+    # Calcula métricas em tempo real.
+    # PublishedPost e Sale são tabelas globais (single-tenant), sem user_id
+    # utilizável aqui, então consideramos todos os registros da conta.
+    posts = db.query(PublishedPost).all()
     total_posts = len(posts)
     total_clicks = sum(p.click_count or 0 for p in posts)
 
-    trackings = db.query(ChannelTracking).filter(
-        ChannelTracking.user_id == current_user.id
-    ).all()
-    total_conversions = sum(t.conversions or 0 for t in trackings)
-    total_revenue = sum(t.revenue or 0.0 for t in trackings)
+    sales = db.query(Sale).filter(Sale.status != "cancelada").all()
+    total_conversions = len(sales)
+    total_revenue = sum(s.net_commission or 0.0 for s in sales)
 
     # Atualiza métricas
     plan = FirstSalePlanRepository.update_metrics(
         db, plan, total_clicks, total_conversions, total_posts
     )
+
+    confirmed_sales = [s for s in sales if s.status == "confirmada"]
+    if confirmed_sales and not plan.first_sale_achieved:
+        first_sale = min(confirmed_sales, key=lambda s: s.purchase_time or "")
+        plan.first_sale_achieved = True
+        plan.first_sale_date = plan.first_sale_date or datetime.utcnow()
+        plan.first_sale_product = plan.first_sale_product or f"Pedido {first_sale.order_id}"
+        plan.first_sale_channel = plan.first_sale_channel or "shopee"
+        db.add(plan)
+        db.commit()
+        db.refresh(plan)
 
     return ResponseBuilder.success(
         data={
@@ -129,13 +138,19 @@ def update_plan(
     )
 
 
+class MarkFirstSaleRequest(BaseModel):
+    product_name: str
+    channel: str
+
+
 @router.post("/mark-first-sale")
 def mark_first_sale(
-    product_name: str,
-    channel: str,
+    payload: MarkFirstSaleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    product_name = payload.product_name
+    channel = payload.channel
     """Marca a primeira venda alcançada."""
     plan = FirstSalePlanRepository.get_or_create(db, current_user.id)
 
