@@ -38,7 +38,10 @@ class SalesTrackerService:
         start = now - (days_back * 86400)
 
         all_nodes: list[dict] = []
-        scroll_id = None
+        # A API da Shopee trata "scrollId: null" como erro ("got null
+        # for non-null"), mesmo o campo sendo nullable no schema: a
+        # primeira pagina exige string vazia, nao None/ausente.
+        scroll_id = ""
         has_next = True
 
         while has_next:
@@ -58,6 +61,18 @@ class SalesTrackerService:
                 logger.warning(f"[SALES_TRACKER] Erro ao consultar Shopee: {e}")
                 break
 
+            # A Shopee retorna HTTP 200 mesmo quando a query falha:
+            # o erro vem dentro do corpo, em "errors". Sem checar isso
+            # explicitamente, uma falha de API vira silenciosamente
+            # "0 vendas encontradas" — o mesmo tipo de falha silenciosa
+            # que causou o bug original.
+            graphql_errors = result.get("errors")
+            if graphql_errors:
+                logger.warning(
+                    f"[SALES_TRACKER] Shopee retornou erro na query: {graphql_errors}"
+                )
+                break
+
             data = (result.get("data") or {}).get("conversionReport") or {}
             nodes = data.get("nodes") or []
             page_info = data.get("pageInfo") or {}
@@ -65,7 +80,7 @@ class SalesTrackerService:
             all_nodes.extend(nodes)
 
             has_next = page_info.get("hasNextPage", False)
-            scroll_id = page_info.get("scrollId")
+            scroll_id = page_info.get("scrollId") or ""
 
             if not has_next or not scroll_id:
                 break
