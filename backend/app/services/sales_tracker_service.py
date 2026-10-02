@@ -149,10 +149,11 @@ class SalesTrackerService:
             except (TypeError, ValueError):
                 product_id = None
 
+            order_status_norm = (parsed["order_status"] or "").strip().lower()
             status = "pendente"
-            if parsed["order_status"] in ("completed", "settled"):
+            if order_status_norm in ("completed", "settled"):
                 status = "confirmada"
-            elif parsed["order_status"] in ("cancelled", "refunded"):
+            elif order_status_norm in ("cancelled", "refunded"):
                 status = "cancelada"
 
             if existing:
