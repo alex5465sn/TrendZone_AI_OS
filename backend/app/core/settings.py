@@ -52,6 +52,29 @@ class Settings(BaseSettings):
     SHOPEE_REFRESH_TOKEN: str = ""
 
     #################################
+    # MERCADO LIVRE
+    #################################
+
+    # Site do catálogo (MLB = Brasil)
+    MERCADOLIVRE_SITE_ID: str = "MLB"
+
+    # Credenciais do aplicativo criado no DevCenter
+    # (https://developers.mercadolivre.com.br/devcenter)
+    # Podem ser definidas por usuário via conta conectada
+    # (MarketplaceAccount) — estas servem de fallback global.
+    MERCADOLIVRE_CLIENT_ID: str = ""
+
+    MERCADOLIVRE_CLIENT_SECRET: str = ""
+
+    # Redirect URI EXATAMENTE igual à cadastrada no DevCenter.
+    # Não pode conter informações variáveis.
+    MERCADOLIVRE_REDIRECT_URI: str = "https://app.trendzone.app/accounts/ml-callback"
+
+    # Estimativa padrão de comissão (%) usada nos produtos do ML
+    # (o programa ML Afiliados não expõe comissão por item via API).
+    MERCADOLIVRE_DEFAULT_COMMISSION: float = 6.0
+
+    #################################
     # FACEBOOK
     #################################
 

@@ -63,6 +63,51 @@ def _decrypt(cipher: str) -> str:
         return ""
 
 
+def encrypt_secret(plain: str) -> str:
+    """Criptografa um segredo de terceiros (uso público interno)."""
+    return _encrypt(plain)
+
+
+def decrypt_secret(cipher: str) -> str:
+    """Descriptografa um segredo de terceiros (uso público interno)."""
+    return _decrypt(cipher)
+
+
+def _normalize_extra(
+    marketplace: str,
+    extra: dict,
+) -> dict:
+    """
+    Normaliza o campo 'extra' de acordo com o marketplace.
+
+    Mercado Livre:
+    - 'app_id' permanece legível (identificador, não é segredo).
+    - 'client_secret' é criptografado -> 'client_secret_enc'.
+    - 'redirect_uri' e 'use_pkce' são preservados.
+
+    Shopee e demais: mantém como está.
+    """
+
+    if marketplace != "mercado_livre":
+        return extra
+
+    normalized = {
+        k: v for k, v in extra.items()
+        if k not in ("client_secret", "client_secret_enc")
+    }
+
+    client_secret = str(extra.get("client_secret") or "").strip()
+
+    if not client_secret and extra.get("client_secret_enc"):
+        # Já vem criptografado (PATCH com extra atual).
+        normalized["client_secret_enc"] = str(extra.get("client_secret_enc"))
+
+    elif client_secret:
+        normalized["client_secret_enc"] = _encrypt(client_secret)
+
+    return normalized
+
+
 class MarketplaceAccountService:
 
     # =====================================================
@@ -124,6 +169,22 @@ class MarketplaceAccountService:
                     "no campo extra (JSON): "
                     'extra={"app_id": "...", "secret": "..."}.'
                 )
+
+        if marketplace == "mercado_livre":
+            app_id = str(extra.get("app_id") or "").strip()
+            client_secret = str(extra.get("client_secret") or "").strip()
+            if not app_id or not client_secret:
+                raise ValueError(
+                    "Para conectar o Mercado Livre, informe 'app_id' e "
+                    "'client_secret' no campo extra (JSON) — os mesmos do "
+                    "seu aplicativo no DevCenter do Mercado Livre: "
+                    'extra={"app_id": "...", "client_secret": "...", '
+                    '"redirect_uri": "https://..."} '
+                    "(redirect_uri deve ser exatamente o cadastrado no "
+                    "DevCenter). Depois use o fluxo de autorização OAuth "
+                    "(/mercadolivre/authorize-url) para conectar a conta."
+                )
+            extra = _normalize_extra("mercado_livre", extra)
 
         existing = MarketplaceAccountService.get_by_user_and_marketplace(
             db, user.id, marketplace
@@ -192,8 +253,15 @@ class MarketplaceAccountService:
         if data.refresh_token is not None:
             account.refresh_token = _encrypt(data.refresh_token.strip())
         if data.extra is not None:
+            extra_value = (
+                json.loads(data.extra) if data.extra else {}
+            )
+            extra_value = _normalize_extra(
+                marketplace.strip().lower(),
+                extra_value,
+            )
             account.extra = json.dumps(
-                json.loads(data.extra) if data.extra else {},
+                extra_value,
                 ensure_ascii=False,
             )
         if data.status is not None:

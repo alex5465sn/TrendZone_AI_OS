@@ -11,7 +11,10 @@ delegar as operações.
 Nenhuma regra de negócio aqui.
 """
 
-from app.integrations.providers import ShopeeProvider
+from app.integrations.providers import (
+    ShopeeProvider,
+    MercadoLivreProvider,
+)
 
 
 class MarketplaceManager:
@@ -21,6 +24,8 @@ class MarketplaceManager:
         self._providers = {
 
             "shopee": ShopeeProvider(),
+
+            "mercado_livre": MercadoLivreProvider(),
 
         }
 

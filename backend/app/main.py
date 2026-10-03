@@ -38,6 +38,7 @@ from app.api.admin_seed import router as admin_seed_router
 from app.commercial_intelligence.api.commercial_intelligence import router as commercial_intelligence_router
 from app.api.funnel import router as funnel_router
 from app.api.content_strategy import router as content_strategy_router
+from app.api.mercadolivre import router as mercadolivre_router
 from app.api.follow_up import router as follow_up_router
 from app.api.channel_tracking import router as channel_tracking_router
 from app.api.seasonal import router as seasonal_router
@@ -178,6 +179,8 @@ app.include_router(sales_router)
 app.include_router(inspector_router)
 
 app.include_router(marketplace_accounts_router)
+
+app.include_router(mercadolivre_router)
 
 app.include_router(facebook_router)
 
