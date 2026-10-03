@@ -82,7 +82,8 @@ def _normalize_extra(
 
     Mercado Livre:
     - 'app_id' permanece legível (identificador, não é segredo).
-    - 'client_secret' é criptografado -> 'client_secret_enc'.
+    - 'client_secret' (ou 'secret', campo genérico usado pela tela de
+      Contas) é criptografado -> 'client_secret_enc'.
     - 'redirect_uri' e 'use_pkce' são preservados.
 
     Shopee e demais: mantém como está.
@@ -93,10 +94,12 @@ def _normalize_extra(
 
     normalized = {
         k: v for k, v in extra.items()
-        if k not in ("client_secret", "client_secret_enc")
+        if k not in ("client_secret", "client_secret_enc", "secret")
     }
 
-    client_secret = str(extra.get("client_secret") or "").strip()
+    client_secret = str(
+        extra.get("client_secret") or extra.get("secret") or ""
+    ).strip()
 
     if not client_secret and extra.get("client_secret_enc"):
         # Já vem criptografado (PATCH com extra atual).
@@ -172,16 +175,16 @@ class MarketplaceAccountService:
 
         if marketplace == "mercado_livre":
             app_id = str(extra.get("app_id") or "").strip()
-            client_secret = str(extra.get("client_secret") or "").strip()
+            client_secret = str(
+                extra.get("client_secret") or extra.get("secret") or ""
+            ).strip()
             if not app_id or not client_secret:
                 raise ValueError(
                     "Para conectar o Mercado Livre, informe 'app_id' e "
-                    "'client_secret' no campo extra (JSON) — os mesmos do "
+                    "'secret' no campo extra (JSON) — os mesmos do "
                     "seu aplicativo no DevCenter do Mercado Livre: "
-                    'extra={"app_id": "...", "client_secret": "...", '
-                    '"redirect_uri": "https://..."} '
-                    "(redirect_uri deve ser exatamente o cadastrado no "
-                    "DevCenter). Depois use o fluxo de autorização OAuth "
+                    'extra={"app_id": "...", "secret": "..."}. '
+                    "Depois use o fluxo de autorização OAuth "
                     "(/mercadolivre/authorize-url) para conectar a conta."
                 )
             extra = _normalize_extra("mercado_livre", extra)
