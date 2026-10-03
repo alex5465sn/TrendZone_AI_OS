@@ -17,6 +17,7 @@ import Sales from "../pages/Sales/Sales";
 import Inspector from "../pages/Inspector/Inspector";
 import Settings from "../pages/Settings/Settings";
 import Accounts from "../pages/Accounts/Accounts";
+import MercadoLivreCallback from "../pages/Accounts/MercadoLivreCallback";
 import Admin from "../pages/Admin/Admin";
 import Funnel from "../pages/Funnel/Funnel";
 import Discovery from "../pages/Discovery/Discovery";
@@ -120,6 +121,11 @@ export default function AppRoutes() {
                                 <Route
                                     path="/accounts"
                                     element={<Accounts />}
+                                />
+
+                                <Route
+                                    path="/accounts/ml-callback"
+                                    element={<MercadoLivreCallback />}
                                 />
 
                                 <Route

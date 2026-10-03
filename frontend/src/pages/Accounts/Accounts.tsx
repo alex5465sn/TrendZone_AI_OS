@@ -42,6 +42,7 @@ import {
     updateAccount,
     type MarketplaceAccountItem,
 } from "../../services/marketplaceAccountService";
+import { getData } from "../../services/apiResponse";
 
 const MARKETPLACE_INFO: Record<string, { label: string; color: string }> = {
     shopee: { label: "Shopee", color: "#EE4D2D" },
@@ -159,6 +160,22 @@ export default function Accounts() {
         }
     }
 
+    async function handleAuthorizeMercadoLivre() {
+        setError("");
+        try {
+            const result = await getData<{ authorize_url: string }>(
+                "/mercadolivre/authorize-url"
+            );
+            window.location.href = result.authorize_url;
+        } catch (e: unknown) {
+            setError(
+                e instanceof Error
+                    ? e.message
+                    : "Falha ao gerar o link de autorização do Mercado Livre."
+            );
+        }
+    }
+
     async function handleDisconnect() {
         setRemoving(true);
         try {
@@ -243,6 +260,15 @@ export default function Accounts() {
                                                 : "Credenciais configuradas"}
                                         </Typography>
                                         <Box display="flex" gap={1}>
+                                            {account.marketplace === "mercado_livre" && (
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    onClick={handleAuthorizeMercadoLivre}
+                                                >
+                                                    Autorizar no Mercado Livre
+                                                </Button>
+                                            )}
                                             <Button
                                                 size="small"
                                                 variant="outlined"
