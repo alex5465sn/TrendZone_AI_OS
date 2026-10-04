@@ -3,6 +3,7 @@ import { getData, postData, putData, deleteData } from "./apiResponse";
 export interface Product {
     id: number;
     uuid: string;
+    marketplace: string;
     item_id: number;
     shop_id: number;
     category: string;
@@ -23,6 +24,7 @@ export interface Product {
 }
 
 export interface ProductCreate {
+    marketplace?: string;
     item_id: number;
     shop_id: number;
     category?: string;

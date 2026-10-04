@@ -43,6 +43,7 @@ export default function Products() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [keyword, setKeyword] = useState("tendencia");
+    const [marketplace, setMarketplace] = useState("shopee");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [promoting, setPromoting] = useState(false);
@@ -52,7 +53,7 @@ export default function Products() {
     const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
     const [promoteError, setPromoteError] = useState("");
 
-    const loadProducts = useCallback(async (search: string) => {
+    const loadProducts = useCallback(async (search: string, mkt: string) => {
 
         try {
 
@@ -60,6 +61,7 @@ export default function Products() {
             setError("");
 
             const data = await searchShopeeProducts({
+                marketplace: mkt,
                 keyword: search,
                 page: 1,
                 limit: 20,
@@ -71,7 +73,7 @@ export default function Products() {
         } catch (err) {
 
             console.error(err);
-            setError("Erro ao buscar produtos na Shopee.");
+            setError(`Erro ao buscar produtos em ${mkt === "mercado_livre" ? "Mercado Livre" : "Shopee"}.`);
 
         } finally {
 
@@ -83,13 +85,19 @@ export default function Products() {
 
     useEffect(() => {
 
-        loadProducts(keyword);
+        loadProducts(keyword, marketplace);
 
-    }, [keyword, loadProducts]);
+    }, [keyword, marketplace, loadProducts]);
 
     function handleSearch() {
 
-        loadProducts(keyword);
+        loadProducts(keyword, marketplace);
+
+    }
+
+    function handleMarketplaceChange(value: string) {
+
+        setMarketplace(value);
 
     }
 
@@ -105,6 +113,7 @@ export default function Products() {
         try {
 
             await createProduct({
+                marketplace: product.marketplace || marketplace,
                 item_id: product.itemId,
                 shop_id: product.shopId,
                 category: activeCategory || "geral",
@@ -286,6 +295,39 @@ export default function Products() {
                 >
                     Buscar
                 </Button>
+
+            </Box>
+
+            <Box
+                sx={{
+                    display: "flex",
+                    gap: 1,
+                    mb: 2,
+                    flexWrap: "wrap",
+                }}
+            >
+
+                {[
+                    { id: "shopee", label: "Shopee" },
+                    { id: "mercado_livre", label: "Mercado Livre" },
+                ].map((mkt) => (
+
+                    <Chip
+                        key={mkt.id}
+                        label={mkt.label}
+                        onClick={() => handleMarketplaceChange(mkt.id)}
+                        sx={{
+                            backgroundColor: marketplace === mkt.id ? "#10B981" : "#1E293B",
+                            color: "#F8FAFC",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            "&:hover": {
+                                backgroundColor: "#10B981",
+                            },
+                        }}
+                    />
+
+                ))}
 
             </Box>
 

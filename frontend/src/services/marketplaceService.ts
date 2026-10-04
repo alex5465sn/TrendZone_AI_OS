@@ -25,6 +25,7 @@ export interface ShopeeProductNode {
     score?: number | null;
     decision?: string | null;
     alreadyTracked?: boolean;
+    marketplace?: string;
 }
 
 export interface PromotePayload {
@@ -72,6 +73,7 @@ export interface ShopeeProductResponse {
 }
 
 export interface MarketplaceFilters {
+    marketplace?: string;
     keyword?: string;
     page?: number;
     limit?: number;
@@ -81,11 +83,14 @@ export interface MarketplaceFilters {
 const MARKETPLACE_TIMEOUT = 10000; // 10s — chamadas externas não devem travar a UI
 
 export async function searchShopeeProducts(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
+    const marketplace = filters.marketplace || "shopee";
     const response = await api.get(
-        `/marketplace/products?keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
+        `/marketplace/products?marketplace=${encodeURIComponent(marketplace)}&keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
         { timeout: MARKETPLACE_TIMEOUT }
     );
-    return response.data.data as ShopeeProductResponse;
+    const data = response.data.data as ShopeeProductResponse;
+    data.nodes = data.nodes.map((node) => ({ ...node, marketplace: node.marketplace || marketplace }));
+    return data;
 }
 
 export async function searchShopeeShops(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {

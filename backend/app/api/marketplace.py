@@ -72,6 +72,7 @@ def _auto_add_if_promoted(db: Session, node: dict, decision: str, score: float) 
         ProductService.create(
             db,
             ProductCreate(
+                marketplace=node.get("marketplace") or "shopee",
                 item_id=node["itemId"],
                 shop_id=node["shopId"],
                 category="geral",

@@ -34,6 +34,8 @@ class ProductCreate(BaseModel):
     Cadastro de um novo produto.
     """
 
+    marketplace: str = "shopee"
+
     item_id: int
 
     shop_id: int
@@ -120,6 +122,8 @@ class ProductResponse(BaseModel):
     id: int
 
     uuid: str
+
+    marketplace: str
 
     item_id: int
 

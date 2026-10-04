@@ -21,6 +21,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CampaignIcon from "@mui/icons-material/Campaign";
 
 import type { ShopeeProductNode } from "../../services/marketplaceService";
+import { MarketplaceBadge, marketplaceViewLabel } from "../../constants/marketplaceBadge";
 
 interface ShopeeProductTableProps {
     products: ShopeeProductNode[];
@@ -102,6 +103,7 @@ export default function ShopeeProductTable({
                                 />
                             </TableCell>
                         )}
+                        <TableCell sx={{ color: "#94A3B8" }}>Origem</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>ID</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Produto</TableCell>
                         <TableCell sx={{ color: "#94A3B8" }}>Loja</TableCell>
@@ -144,6 +146,10 @@ export default function ShopeeProductTable({
                                         />
                                     </TableCell>
                                 )}
+
+                                <TableCell>
+                                    <MarketplaceBadge marketplace={product.marketplace} />
+                                </TableCell>
 
                                 <TableCell>
                                     <Chip
@@ -245,7 +251,7 @@ export default function ShopeeProductTable({
                                         }}
                                     >
 
-                                        <Tooltip title="Ver na Shopee">
+                                        <Tooltip title={marketplaceViewLabel(product.marketplace)}>
                                             <IconButton
                                                 href={product.offerLink}
                                                 target="_blank"

@@ -73,6 +73,8 @@ class ProductService(BaseService):
 
         product = Product(
 
+            marketplace=data.marketplace or "shopee",
+
             item_id=data.item_id,
 
             shop_id=data.shop_id,
