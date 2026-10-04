@@ -1,6 +1,27 @@
 version: "3.9"
 
 services:
+  # ========================================
+  # Nginx Reverse Proxy + SSL/TLS
+  # ========================================
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx.Dockerfile
+    container_name: trendzone_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs/letsencrypt:/etc/letsencrypt
+      - ./certs/certbot:/var/www/certbot
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks:
+      - trendzone_network
+
   waha:
     image: devlikeapro/waha:latest
     container_name: trendzone_waha
@@ -15,6 +36,8 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    networks:
+      - trendzone_network
 
   backend:
     build:
@@ -32,16 +55,24 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    networks:
+      - trendzone_network
 
   frontend:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:8000}
+        VITE_API_URL: ${VITE_API_URL:-https://app.trendzone.app/api}
     container_name: trendzone_frontend
     ports:
       - "4173:4173"
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - trendzone_network
+
+networks:
+  trendzone_network:
+    driver: bridge
