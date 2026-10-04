@@ -210,9 +210,16 @@ class MarketplaceAccountService:
             )
             .first()
         )
+        requires_oauth = marketplace == "mercado_livre"
+        initial_status = (
+            "pendente"
+            if requires_oauth and not (data.access_token or "").strip()
+            else "conectada"
+        )
+
         if inactive is not None:
             inactive.is_active = True
-            inactive.status = "conectada"
+            inactive.status = initial_status
             inactive.last_validated_at = now
             inactive.access_token = _encrypt((data.access_token or "").strip())
             inactive.refresh_token = _encrypt((data.refresh_token or "").strip())
@@ -230,7 +237,7 @@ class MarketplaceAccountService:
                 extra,
                 ensure_ascii=False,
             ),
-            status="conectada",
+            status=initial_status,
             last_validated_at=now,
         )
         db.add(account)
