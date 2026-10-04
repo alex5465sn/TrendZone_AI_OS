@@ -126,9 +126,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
 
-        env_file=(
-            Path(__file__).resolve().parents[3] / ".env"
-        ),
+        env_file=".env",
 
         extra="ignore",
 
