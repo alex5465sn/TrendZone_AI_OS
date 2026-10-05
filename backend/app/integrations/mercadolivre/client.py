@@ -27,12 +27,18 @@ from __future__ import annotations
 import secrets
 import hashlib
 import base64
+import time
 from typing import Any
 from urllib.parse import urlencode
 
 import requests
 
 from app.core.settings import settings
+
+_app_token_cache: dict[str, Any] = {
+    "token": None,
+    "expires_at": 0.0,
+}
 
 
 class MercadoLivreException(Exception):
@@ -239,32 +245,56 @@ class MercadoLivreClient:
     # API — busca pública (não exige token)
     # =====================================================
 
-    def search_site(
-        self,
-        q: str,
-        offset: int = 0,
-        limit: int = 20,
-    ) -> dict[str, Any]:
-        """
-        GET /sites/{site}/search — busca pública
-        no catálogo do Mercado Livre.
+    # =====================================================
+    # Token de aplicativo (client_credentials)
+    # =====================================================
+    #
+    # O endpoint público de busca "/sites/{site}/search" foi
+    # restringido pelo Mercado Livre para aplicativos não
+    # certificados (retorna 403 "forbidden" mesmo autenticado).
+    #
+    # Em substituição, usamos os endpoints de catálogo por
+    # palavra-chave, que continuam disponíveis para qualquer
+    # aplicativo autenticado:
+    #
+    #   1. /products/search?q=palavra   -> produtos de catálogo
+    #   2. /products/{id}/items         -> preço da oferta vencedora
+    #
+    # Essas chamadas exigem um token de aplicativo (não é
+    # necessário o usuário conectar a conta).
 
-        Não exige autenticação. Limite máximo por
-        página: 50 itens.
-        """
+    def _get_app_token(self) -> str:
 
-        endpoint = f"{self.API_BASE}/sites/{self.site_id}/search"
+        now = time.time()
+
+        if (
+            _app_token_cache["token"]
+            and now < _app_token_cache["expires_at"]
+        ):
+
+            return _app_token_cache["token"]
+
+        client_id = settings.MERCADOLIVRE_CLIENT_ID
+        client_secret = settings.MERCADOLIVRE_CLIENT_SECRET
+
+        if not client_id or not client_secret:
+
+            raise MercadoLivreException(
+                "Mercado Livre não configurado "
+                "(MERCADOLIVRE_CLIENT_ID / "
+                "MERCADOLIVRE_CLIENT_SECRET ausentes).",
+            )
 
         try:
 
-            response = requests.get(
+            response = requests.post(
 
-                endpoint,
+                self.TOKEN_URL,
 
-                params={
-                    "q": q,
-                    "offset": max(0, int(offset)),
-                    "limit": min(50, max(1, int(limit))),
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": client_id,
+                    "client_secret": client_secret,
                 },
 
                 timeout=self.DEFAULT_TIMEOUT,
@@ -281,10 +311,124 @@ class MercadoLivreClient:
 
             raise self._error(
                 response,
-                "Erro na busca de produtos do Mercado Livre",
+                "Erro ao autenticar aplicativo no Mercado Livre",
+            )
+
+        body = response.json()
+
+        token = body.get("access_token")
+
+        if not token:
+
+            raise MercadoLivreException(
+                "Mercado Livre não retornou access_token "
+                "de aplicativo.",
+            )
+
+        # Expira 60s antes do prazo real, por segurança.
+        expires_in = int(body.get("expires_in") or 21600)
+
+        _app_token_cache["token"] = token
+        _app_token_cache["expires_at"] = now + max(
+            60, expires_in - 60,
+        )
+
+        return token
+
+    def _app_get(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | list[Any]:
+
+        token = self._get_app_token()
+
+        try:
+
+            response = requests.get(
+
+                f"{self.API_BASE}{path}",
+
+                params=params,
+
+                headers={
+                    "Authorization": f"Bearer {token}",
+                },
+
+                timeout=self.DEFAULT_TIMEOUT,
+
+            )
+
+        except requests.RequestException as e:
+
+            raise MercadoLivreException(
+                f"Falha de conexão com o Mercado Livre: {e}",
+            ) from e
+
+        if response.status_code >= 400:
+
+            raise self._error(
+                response,
+                "Erro ao consultar o catálogo do Mercado Livre",
             )
 
         return response.json()
+
+    def products_search(
+        self,
+        q: str,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """
+        GET /products/search — busca por palavra-chave no
+        catálogo (ficha de produto), com cobertura equivalente
+        à busca de itens, sem sofrer o bloqueio de 403 que
+        afeta "/sites/{site}/search" para apps não certificados.
+        """
+
+        data = self._app_get(
+            "/products/search",
+            params={
+                "status": "active",
+                "site_id": self.site_id,
+                "q": q,
+                "offset": max(0, int(offset)),
+                "limit": min(50, max(1, int(limit))),
+            },
+        )
+
+        return data if isinstance(data, dict) else {}
+
+    def get_product(
+        self,
+        product_id: str,
+    ) -> dict[str, Any]:
+        """
+        GET /products/{id} — ficha de catálogo
+        (nome, imagens, atributos).
+        """
+
+        data = self._app_get(f"/products/{product_id}")
+
+        return data if isinstance(data, dict) else {}
+
+    def get_product_items(
+        self,
+        product_id: str,
+    ) -> list[dict[str, Any]]:
+        """
+        GET /products/{id}/items — ofertas (vendedores)
+        ativas para o produto de catálogo, com preço.
+        """
+
+        data = self._app_get(f"/products/{product_id}/items")
+
+        if isinstance(data, dict):
+
+            return data.get("results") or []
+
+        return []
 
     def get_item(
         self,

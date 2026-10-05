@@ -34,6 +34,8 @@ Diferenças importantes vs. Shopee:
 from __future__ import annotations
 
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from app.core.settings import settings
@@ -142,39 +144,186 @@ class MercadoLivreService:
         page = max(1, int(page or 1))
         limit = max(1, min(50, int(limit or 20)))
 
-        offset = (page - 1) * limit
+        # O endpoint de busca livre ("/sites/{site}/search") é
+        # bloqueado pelo Mercado Livre para apps não certificados
+        # (403 "forbidden"). Em seu lugar, usamos "/products/search"
+        # (ficha de catálogo por palavra-chave), que continua
+        # disponível.
+        #
+        # Nem todo produto de catálogo tem oferta ativa no momento
+        # ("/products/{id}/items" devolve 404 "No winners found"
+        # para quem não tem vendedor no momento) — na prática só
+        # uma fração dos resultados de catálogo tem preço. Por
+        # isso varremos um lote maior de candidatos por página
+        # (RAW_BATCH_SIZE), em paralelo, até reunir "limit"
+        # produtos com oferta válida.
+        raw_window_start = (page - 1) * self.RAW_SCAN_PER_PAGE
 
-        raw = self.client.search_site(
-            q=keyword,
-            offset=offset,
-            limit=limit,
-        )
+        nodes: list[dict[str, Any]] = []
+        raw_scanned = 0
+        total = 0
+        started_at = time.monotonic()
 
-        paging = raw.get("paging") or {}
+        while (
+            len(nodes) < limit
+            and raw_scanned < self.RAW_SCAN_PER_PAGE
+            # Palavras-chave com pouca oferta ativa podem exigir
+            # vários lotes — nesse caso é melhor devolver menos
+            # resultados rápido do que travar a busca do usuário.
+            and (time.monotonic() - started_at) < self.MAX_SEARCH_SECONDS
+        ):
 
-        nodes = []
+            batch_offset = raw_window_start + raw_scanned
 
-        for result in raw.get("results") or []:
+            # "/products/search" só permite acessar os primeiros
+            # ~150 resultados de cada busca (offset máximo 100,
+            # mesmo quando "paging.total" informa um valor bem
+            # maior) — passar disso devolve 400 "Invalid arguments".
+            if batch_offset > self.MAX_RAW_OFFSET:
+                break
 
-            node = self._to_node(result)
+            batch_size = min(
+                self.RAW_BATCH_SIZE,
+                self.RAW_SCAN_PER_PAGE - raw_scanned,
+                self.MAX_RAW_OFFSET + self.RAW_BATCH_SIZE - batch_offset,
+            )
 
-            if node is not None:
+            if batch_size <= 0:
+                break
 
-                nodes.append(node)
+            raw = self.client.products_search(
+                q=keyword,
+                offset=batch_offset,
+                limit=batch_size,
+            )
 
-        total = int(paging.get("total") or 0)
+            paging = raw.get("paging") or {}
+            total = int(paging.get("total") or 0)
+
+            results = raw.get("results") or []
+
+            if not results:
+                break
+
+            raw_scanned += len(results)
+
+            nodes.extend(
+                self._fetch_nodes(results, limit - len(nodes)),
+            )
+
+        # O catálogo só expõe os primeiros ~150 resultados por
+        # palavra-chave, então o total "real" navegável é sempre
+        # o menor entre o total informado pela API e esse limite.
+        reachable_total = min(total, self.RAW_SCAN_PER_PAGE)
 
         return {
-            "nodes": nodes,
+            "nodes": nodes[:limit],
             "pageInfo": {
                 "page": page,
                 "limit": limit,
                 "hasNextPage": bool(
-                    offset + limit < total,
+                    raw_window_start + raw_scanned < reachable_total,
                 ),
                 "scrollId": "",
             },
         }
+
+    # Offset máximo aceito por "/products/search" — a API
+    # devolve 400 "Invalid arguments" acima disso.
+    MAX_RAW_OFFSET = 100
+
+    # Tempo máximo (segundos) varrendo lotes extras em busca de
+    # ofertas ativas, antes de devolver o que já foi encontrado.
+    MAX_SEARCH_SECONDS = 9
+
+    # Máximo de candidatos de catálogo varridos por página
+    # (em lotes de RAW_BATCH_SIZE, em paralelo) até desistir.
+    RAW_SCAN_PER_PAGE = 100
+
+    # Tamanho máximo aceito por chamada a "/products/search".
+    RAW_BATCH_SIZE = 50
+
+    # Chamadas simultâneas a "/products/{id}/items".
+    MAX_WORKERS = 15
+
+    def _fetch_nodes(
+        self,
+        results: list[dict[str, Any]],
+        wanted: int,
+    ) -> list[dict[str, Any]]:
+        """
+        Para cada produto de catálogo em ``results``, busca a
+        oferta vencedora em paralelo e monta o node (formato
+        Shopee). Produtos sem oferta ativa são descartados.
+        """
+
+        by_id = {
+            str(result.get("id") or "").strip(): result
+            for result in results
+            if result.get("id")
+        }
+
+        if not by_id:
+            return []
+
+        nodes: list[dict[str, Any]] = []
+
+        with ThreadPoolExecutor(
+            max_workers=self.MAX_WORKERS,
+        ) as executor:
+
+            futures = {
+                executor.submit(
+                    self.client.get_product_items,
+                    product_id,
+                ): product_id
+                for product_id in by_id
+            }
+
+            for future in as_completed(futures):
+
+                product_id = futures[future]
+
+                try:
+
+                    offers = future.result()
+
+                except MercadoLivreException:
+                    # Um produto específico instável não deve
+                    # derrubar a página inteira de resultados.
+                    continue
+
+                if not offers:
+                    continue
+
+                best_offer = offers[0]
+                result = by_id[product_id]
+
+                merged = {
+                    "id": product_id,
+                    "title": result.get("name") or "",
+                    "permalink": (
+                        "https://www.mercadolivre.com.br/p/"
+                        f"{product_id}"
+                    ),
+                    "pictures": result.get("pictures") or [],
+                    "domain_id": result.get("domain_id") or "",
+                    "seller": {"id": best_offer.get("seller_id")},
+                    "price": best_offer.get("price"),
+                    "original_price": best_offer.get(
+                        "original_price",
+                    ),
+                    "shipping": best_offer.get("shipping") or {},
+                    "sold_quantity": 0,
+                    "reviews": {},
+                }
+
+                node = self._to_node(merged)
+
+                if node is not None:
+                    nodes.append(node)
+
+        return nodes
 
     # =====================================================
     # Item
