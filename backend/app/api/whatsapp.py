@@ -43,7 +43,16 @@ def start_session(
     conn = _get_or_create_connection(db, current_user.id)
     result = waha_client.start_session()
 
-    if not result.get("ok"):
+    # O WAHA responde 422 "Session 'default' is already started" quando a
+    # sessão já existe (ex.: aguardando leitura do QR Code de uma tentativa
+    # anterior) — isso não é uma falha de conexão, é só um sinal de que já
+    # podemos seguir direto para buscar o QR Code.
+    already_started = (
+        result.get("status_code") == 422
+        and "already started" in str(result.get("data", "")).lower()
+    )
+
+    if not result.get("ok") and not already_started:
         conn.status = "error"
         conn.last_error = result.get("error", "Falha ao iniciar sessão no servidor WAHA.")
         db.commit()
