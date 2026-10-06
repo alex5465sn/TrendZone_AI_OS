@@ -82,11 +82,17 @@ export interface MarketplaceFilters {
 
 const MARKETPLACE_TIMEOUT = 10000; // 10s — chamadas externas não devem travar a UI
 
+// A busca de catálogo do Mercado Livre varre vários candidatos até achar
+// os que têm oferta ativa (pode levar ~9s no backend) — por isso usa um
+// timeout maior do que a Shopee para não estourar antes da resposta chegar.
+const MARKETPLACE_TIMEOUT_MERCADO_LIVRE = 25000; // 25s
+
 export async function searchShopeeProducts(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
     const marketplace = filters.marketplace || "shopee";
+    const timeout = marketplace === "mercado_livre" ? MARKETPLACE_TIMEOUT_MERCADO_LIVRE : MARKETPLACE_TIMEOUT;
     const response = await api.get(
         `/marketplace/products?marketplace=${encodeURIComponent(marketplace)}&keyword=${encodeURIComponent(filters.keyword || "")}&page=${filters.page || 1}&limit=${filters.limit || 20}&sortType=${filters.sortType || 1}`,
-        { timeout: MARKETPLACE_TIMEOUT }
+        { timeout }
     );
     const data = response.data.data as ShopeeProductResponse;
     data.nodes = data.nodes.map((node) => ({ ...node, marketplace: node.marketplace || marketplace }));
