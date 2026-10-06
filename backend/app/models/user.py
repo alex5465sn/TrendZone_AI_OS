@@ -90,3 +90,8 @@ class User(BaseModel):
         String(500),
         default="",
     )
+
+    whatsapp_number: Mapped[str] = mapped_column(
+        String(20),
+        default="",
+    )

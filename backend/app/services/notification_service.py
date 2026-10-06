@@ -33,6 +33,75 @@ class NotificationService(BaseService):
     SERVICE_NAME = "NOTIFICATION_SERVICE"
 
     @classmethod
+    def create(
+        cls,
+        db: Session,
+        user_id: int,
+        title: str,
+        message: str,
+        related_entity_type: str = "",
+        related_entity_id: int | None = None,
+    ) -> Notification:
+        """
+        Cria e persiste uma notificação genérica, tentando enviar
+        também por WhatsApp quando o usuário tem número cadastrado.
+
+        Usada pelos agentes (Auto-Scout, Publisher) para avisos que
+        não se encaixam nos templates específicos abaixo.
+        """
+
+        user = db.query(User).filter(User.id == user_id).first()
+
+        whatsapp_sent = False
+        if user and user.whatsapp_number:
+            whatsapp_sent = cls._send_whatsapp_text(
+                user.whatsapp_number,
+                f"*{title}*\n\n{message}",
+            )
+
+        notification = Notification(
+            user_id=user_id,
+            notification_type="whatsapp" if whatsapp_sent else "push",
+            title=title,
+            message=message,
+            sent=whatsapp_sent,
+            sent_at=datetime.utcnow() if whatsapp_sent else None,
+            related_entity_type=related_entity_type,
+            related_entity_id=related_entity_id,
+        )
+        db.add(notification)
+        db.commit()
+        db.refresh(notification)
+
+        if not whatsapp_sent:
+            cls.log_info(f"[PUSH] {title}: {message}")
+
+        return notification
+
+    @classmethod
+    def _send_whatsapp_text(cls, phone_number: str, text: str) -> bool:
+        """Envia texto livre via WAHA (usado por create())."""
+
+        try:
+            from app.services.waha_client import waha_client
+
+            phone = phone_number.replace("+", "").replace("-", "").replace(" ", "")
+            if not phone.startswith("55"):
+                phone = f"55{phone}"
+
+            result = waha_client.send_text(phone, text)
+            if result.get("ok"):
+                cls.log_success(f"WhatsApp enviado para {phone}")
+                return True
+
+            cls.log_error(f"Erro ao enviar WhatsApp: {result}")
+            return False
+
+        except Exception as e:
+            cls.log_error(f"Exceção ao enviar WhatsApp: {str(e)}")
+            return False
+
+    @classmethod
     def send_post_published_notification(
         cls,
         db: Session,

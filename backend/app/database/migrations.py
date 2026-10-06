@@ -60,6 +60,9 @@ EXTRA_COLUMNS = {
     "published_posts": [
         ("product_image", "VARCHAR(500) NOT NULL DEFAULT ''"),
     ],
+    "users": [
+        ("whatsapp_number", "VARCHAR(20) NOT NULL DEFAULT ''"),
+    ],
 }
 
 
