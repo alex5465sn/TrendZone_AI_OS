@@ -23,6 +23,9 @@ import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
 
 import FacebookIcon from "@mui/icons-material/Facebook";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import TelegramIcon from "@mui/icons-material/Telegram";
+import TwitterIcon from "@mui/icons-material/Twitter";
 
 import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
@@ -393,6 +396,19 @@ export default function Scout() {
         }
     }
 
+    function handleShare(network: "whatsapp" | "telegram" | "twitter") {
+        const text = encodeURIComponent(postText);
+        const link = encodeURIComponent(postProduct?.offerLink || "");
+
+        const urls: Record<typeof network, string> = {
+            whatsapp: `https://wa.me/?text=${text}`,
+            telegram: `https://t.me/share/url?url=${link}&text=${text}`,
+            twitter: `https://twitter.com/intent/tweet?text=${text}`,
+        };
+
+        window.open(urls[network], "_blank", "noopener,noreferrer");
+    }
+
     async function handlePostToFacebook() {
 
         if (!postProduct) return;
@@ -644,6 +660,30 @@ export default function Scout() {
                                     : postProduct && postedIds.includes(postProduct.itemId)
                                     ? "Postar de novo"
                                     : "Postar no Facebook"}
+                            </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
+                                startIcon={<WhatsAppIcon />}
+                                onClick={() => handleShare("whatsapp")}
+                            >
+                                WhatsApp
+                            </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
+                                startIcon={<TelegramIcon />}
+                                onClick={() => handleShare("telegram")}
+                            >
+                                Telegram
+                            </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
+                                startIcon={<TwitterIcon />}
+                                onClick={() => handleShare("twitter")}
+                            >
+                                X / Twitter
                             </Button>
                             <Button
                                 color="inherit"
