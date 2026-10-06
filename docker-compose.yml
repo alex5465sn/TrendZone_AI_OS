@@ -49,7 +49,7 @@ services:
     environment:
       WAHA_URL: http://waha:3000
     volumes:
-      - ./backend/trendzone.db/trendzone.db:/app/backend/trendzone.db
+      - ./backend/trendzone.db:/app/backend/trendzone.db
       - ./backend/logs:/app/backend/logs
       - ./backend/media:/app/backend/media
     ports:

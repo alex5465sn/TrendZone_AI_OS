@@ -4,27 +4,26 @@ TrendZone AI OS
 
 Task Scheduler
 
-Controla execuções automáticas
-do Pipeline.
+Controla execuções automáticas do Pipeline
+e dos serviços de background (Auto-Scout,
+Auto-Publisher, Facebook Auto Post).
 
-Nesta primeira versão o Scheduler
-é manual.
-
-No futuro suportará:
-
-- Cron
-- APScheduler
-- Celery
-- Redis
-- Docker Workers
+Usa asyncio nativo (compatível com FastAPI)
+para agendar tarefas periódicas sem
+dependências externas.
 """
 
-from app.core.logger import TZLogger
+import asyncio
+from datetime import datetime
 
+from app.core.logger import TZLogger
 from app.tasks.task_pipeline import TaskPipeline
 
 
 class Scheduler:
+
+    _tasks: list = []
+    _running = False
 
     def __init__(self):
 
@@ -37,31 +36,55 @@ class Scheduler:
     def execute(self):
 
         TZLogger.info(
-
             "SCHEDULER",
-
             "Executando Pipeline..."
-
         )
 
         return self.pipeline.run()
 
     def start(self):
 
-        TZLogger.success(
+        if self._running:
+            return
 
+        self._running = True
+
+        try:
+            from app.services.auto_scout_service import AutoScoutService
+            AutoScoutService.start()
+            TZLogger.info("SCHEDULER", "Auto-Scout multi-marketplace ativo.")
+        except Exception as e:
+            TZLogger.warning("SCHEDULER", f"Auto-Scout falhou ao iniciar: {e}")
+
+        try:
+            from app.services.auto_publisher_service import AutoPublisherService
+            AutoPublisherService.start()
+            TZLogger.info("SCHEDULER", "Auto-Publisher ativo.")
+        except Exception as e:
+            TZLogger.warning("SCHEDULER", f"Auto-Publisher falhou ao iniciar: {e}")
+
+        TZLogger.info(
             "SCHEDULER",
-
-            "Scheduler iniciado."
-
+            "Scheduler iniciado com todos os serviços automáticos."
         )
 
     def stop(self):
 
+        self._running = False
+
+        try:
+            from app.services.auto_scout_service import AutoScoutService
+            AutoScoutService.stop()
+        except Exception:
+            pass
+
+        try:
+            from app.services.auto_publisher_service import AutoPublisherService
+            AutoPublisherService.stop()
+        except Exception:
+            pass
+
         TZLogger.warning(
-
             "SCHEDULER",
-
             "Scheduler encerrado."
-
         )

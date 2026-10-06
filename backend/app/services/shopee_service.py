@@ -15,15 +15,15 @@ from app.services.base_service import BaseService
 
 from app.integrations.shopee.gateway import ShopeeGateway
 
-from app.integrations.shopee.queries.products import (
+from app.integrations.shopee.graphql.products import (
     PRODUCT_OFFER_V2,
 )
 
-from app.integrations.shopee.queries.campaigns import (
+from app.integrations.shopee.graphql.campaigns import (
     SHOP_OFFER_V2,
 )
 
-from app.integrations.shopee.queries.reports import (
+from app.integrations.shopee.graphql.reports import (
     CONVERSION_REPORT,
 )
 
