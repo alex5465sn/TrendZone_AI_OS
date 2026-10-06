@@ -50,9 +50,12 @@ class WahaClient:
 
     def get_qr_code(self) -> dict:
         try:
+            # Sem "Accept: application/json" o WAHA devolve o PNG puro
+            # (binário) em vez do JSON com o base64 — o que quebrava o
+            # parsing e deixava o QR Code em branco no frontend.
             resp = requests.get(
                 self._url(f"/api/{self.session}/auth/qr"),
-                headers=self.headers,
+                headers={**self.headers, "Accept": "application/json"},
                 timeout=10,
             )
             return {"ok": resp.ok, "status_code": resp.status_code, "data": self._safe_json(resp)}
