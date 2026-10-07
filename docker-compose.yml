@@ -34,7 +34,7 @@ services:
     volumes:
       - ./waha_sessions:/app/.sessions
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     restart: unless-stopped
     networks:
       - trendzone_network
@@ -53,7 +53,7 @@ services:
       - ./backend/logs:/app/backend/logs
       - ./backend/media:/app/backend/media
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     restart: unless-stopped
     networks:
       - trendzone_network
@@ -66,7 +66,7 @@ services:
         VITE_API_URL: ${VITE_API_URL:-https://app.trendzone.app/api}
     container_name: trendzone_frontend
     ports:
-      - "4173:4173"
+      - "127.0.0.1:4173:4173"
     depends_on:
       - backend
     restart: unless-stopped

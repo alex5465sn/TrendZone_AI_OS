@@ -8,9 +8,11 @@ Responsável por iniciar o Pipeline
 completo de inteligência.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.api.response import ResponseBuilder
+from app.dependencies import get_admin_user
+from app.models.user import User
 
 from app.tasks.runner import Runner
 
@@ -24,7 +26,7 @@ router = APIRouter(
 
 
 @router.post("/run")
-def execute_pipeline():
+def execute_pipeline(current_user: User = Depends(get_admin_user)):
 
     runner = Runner()
 
@@ -40,7 +42,7 @@ def execute_pipeline():
 
 
 @router.get("/status")
-def status():
+def status(current_user: User = Depends(get_admin_user)):
 
     return ResponseBuilder.success(
 

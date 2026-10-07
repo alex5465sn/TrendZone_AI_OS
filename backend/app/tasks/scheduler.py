@@ -75,14 +75,14 @@ class Scheduler:
         try:
             from app.services.auto_scout_service import AutoScoutService
             AutoScoutService.stop()
-        except Exception:
-            pass
+        except Exception as e:
+            TZLogger.warning("SCHEDULER", f"Erro ao parar AutoScout: {e}")
 
         try:
             from app.services.auto_publisher_service import AutoPublisherService
             AutoPublisherService.stop()
-        except Exception:
-            pass
+        except Exception as e:
+            TZLogger.warning("SCHEDULER", f"Erro ao parar AutoPublisher: {e}")
 
         TZLogger.warning(
             "SCHEDULER",

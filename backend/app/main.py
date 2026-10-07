@@ -22,7 +22,7 @@ from app.api.scout import router as scout_router
 from app.api.system_info import router as system_router
 from app.api.dashboard import router as dashboard_router
 from app.api.health import router as health_router
-from app.api.pipeline import router as pipeline_router
+
 from app.api.marketplace import router as marketplace_router
 from app.api.admin import router as admin_router
 from app.api.analytics import router as analytics_router
@@ -161,8 +161,6 @@ app.include_router(system_router)
 app.include_router(dashboard_router)
 
 app.include_router(health_router)
-
-app.include_router(pipeline_router)
 
 app.include_router(marketplace_router)
 

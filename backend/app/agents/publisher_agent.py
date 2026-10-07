@@ -56,8 +56,8 @@ class PublisherAgent(BaseAgent):
             if published:
                 try:
                     self._notify_new_products(published)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"[PUBLISHER] Falha ao notificar novos produtos: {e}")
 
             context.set_metadata(
                 "published_reports",

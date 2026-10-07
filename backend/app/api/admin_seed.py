@@ -2,14 +2,19 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_admin_user
 from app.repositories.user_repository import UserRepository
 from app.api.response import ResponseBuilder
+from app.models.user import User
 
 router = APIRouter(prefix="/admin", tags=["Admin Seed"])
 
 
 @router.post("/seed")
-def seed_admin(db: Session = Depends(get_db)):
+def seed_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
     user = UserRepository.get_by_email(db, "admin@trendzone.com")
 
     if not user:

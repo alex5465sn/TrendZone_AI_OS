@@ -8,6 +8,7 @@
 .secrets/
 *.key
 *.pem
+certs/
 
 # ============================================
 # Python
@@ -120,7 +121,6 @@ Thumbs.db
 # ============================================
 # Docker
 # ============================================
-.dockerignore
 docker-compose.override.yml
 waha_sessions/
 

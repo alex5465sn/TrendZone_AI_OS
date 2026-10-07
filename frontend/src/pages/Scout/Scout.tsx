@@ -727,7 +727,7 @@ export default function Scout() {
                                 Prévia do vídeo gerado:
                             </Typography>
                             <video
-                                src={`http://127.0.0.1:8000${videoUrl}`}
+                                src={`${import.meta.env.VITE_API_URL || ""}${videoUrl}`}
                                 controls
                                 style={{ maxWidth: 220, borderRadius: 8 }}
                             />

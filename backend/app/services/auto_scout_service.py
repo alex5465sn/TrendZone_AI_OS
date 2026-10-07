@@ -104,8 +104,8 @@ class AutoScoutService:
                             ),
                         )
                         count += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[AUTO_SCOUT] Erro ao processar produto: {e}")
 
             db.commit()
             logger.info(

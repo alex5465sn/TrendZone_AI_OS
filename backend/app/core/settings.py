@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     VERSION: str = "0.1.0"
 
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     API_PREFIX: str = "/api/v1"
 
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # JWT
     #################################
 
-    SECRET_KEY: str = "trendzone-super-secret-key"
+    SECRET_KEY: str
 
     ALGORITHM: str = "HS256"
 
