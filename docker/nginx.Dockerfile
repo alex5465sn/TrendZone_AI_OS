@@ -11,7 +11,7 @@ RUN mkdir -p /var/www/certbot
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://127.0.0.1/health || exit 1
 
 EXPOSE 80 443
 
