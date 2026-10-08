@@ -30,7 +30,7 @@ import TwitterIcon from "@mui/icons-material/Twitter";
 import { searchShopeeProducts, type ShopeeProductNode } from "../../services/marketplaceService";
 import { createProduct } from "../../services/productService";
 import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
-import { generateFacebookPost } from "../../utils/postGenerator";
+import { generateFacebookPostVariations } from "../../utils/postGenerator";
 import { createTrackingLink } from "../../services/trackingService";
 import {
     getFacebookStatus,
@@ -91,6 +91,8 @@ export default function Scout() {
     });
     const [postProductId, setPostProductId] = useState<number | null>(null);
     const [postText, setPostText] = useState("");
+    const [postVariations, setPostVariations] = useState<string[]>([]);
+    const [postVariationIndex, setPostVariationIndex] = useState(0);
     const [postProduct, setPostProduct] = useState<ShopeeProductNode | null>(null);
     const postAlertRef = useRef<HTMLDivElement>(null);
     const generatePostRequestIdRef = useRef(0);
@@ -284,14 +286,16 @@ export default function Scout() {
             return;
         }
 
-        const text = generateFacebookPost({
+        const variations = generateFacebookPostVariations({
             productName: product.productName,
             price: product.price,
             priceDiscountRate: product.priceDiscountRate,
             offerLink: trackableLink,
             commissionRate: product.commissionRate,
-        });
-        setPostText(text);
+        }, 3);
+        setPostVariations(variations);
+        setPostVariationIndex(0);
+        setPostText(variations[0]);
         setPostProductId(product.itemId);
         setPostProduct(product);
         setVideoUrl("");
@@ -426,6 +430,13 @@ export default function Scout() {
         } finally {
             setAnalyzingId(null);
         }
+    }
+
+    function handleNextVariation() {
+        if (postVariations.length < 2) return;
+        const nextIndex = (postVariationIndex + 1) % postVariations.length;
+        setPostVariationIndex(nextIndex);
+        setPostText(postVariations[nextIndex]);
     }
 
     async function handleCopyPost() {
@@ -689,6 +700,11 @@ export default function Scout() {
                             <Button color="inherit" size="small" onClick={handleCopyPost}>
                                 Copiar
                             </Button>
+                            {postVariations.length > 1 && (
+                                <Button color="inherit" size="small" onClick={handleNextVariation}>
+                                    Nova variação ({postVariationIndex + 1}/{postVariations.length})
+                                </Button>
+                            )}
                             <Button
                                 color="inherit"
                                 size="small"
