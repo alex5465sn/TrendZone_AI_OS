@@ -13,9 +13,8 @@ Responsável por:
 
 from datetime import datetime, timedelta, timezone
 
-
+import bcrypt as _bcrypt
 import jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from app.core.settings import settings
@@ -24,20 +23,21 @@ from app.core.settings import settings
 # PASSWORD HASHING
 # =====================================================
 
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-)
-
 
 def hash_password(password: str) -> str:
-    """Hash uma senha usando bcrypt."""
-    return pwd_context.hash(password)
+    return _bcrypt.hashpw(
+        password.encode("utf-8"), _bcrypt.gensalt()
+    ).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica se a senha corresponde ao hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return _bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+    except Exception:
+        return False
 
 
 # =====================================================

@@ -83,18 +83,24 @@ async def lifespan(app: FastAPI):
 
     Base.metadata.create_all(bind=engine)
 
+    print("[ORQUESTRADOR] Iniciando servicos de background...")
     AutoPublisherService.start()
+    print("[ORQUESTRADOR] AutoPublisher: OK")
     FacebookSchedulerService.start()
+    print("[ORQUESTRADOR] FacebookScheduler: OK")
     AutoScoutService.start()
+    print("[ORQUESTRADOR] AutoScout: OK")
+    print("[ORQUESTRADOR] Todos os servicos iniciados. Backend pronto.")
 
     yield
 
+    print("[ORQUESTRADOR] Encerrando servicos...")
     AutoPublisherService.stop()
     FacebookSchedulerService.stop()
     AutoScoutService.stop()
 
     print("\n========================================")
-    print("Encerrando Backend...")
+    print("Backend encerrado.")
     print("========================================\n")
 
 

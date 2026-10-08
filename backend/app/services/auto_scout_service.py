@@ -53,9 +53,10 @@ class AutoScoutService:
 
     @classmethod
     async def _loop(cls):
+        await asyncio.sleep(45)
         while cls._running:
             try:
-                cls._run_once()
+                await asyncio.to_thread(cls._run_once)
             except Exception as e:
                 logger.warning(f"[AUTO_SCOUT] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)

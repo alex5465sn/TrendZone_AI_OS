@@ -51,9 +51,10 @@ class AutoPublisherService:
 
     @classmethod
     async def _loop(cls):
+        await asyncio.sleep(15)
         while cls._running:
             try:
-                cls._run_check()
+                await asyncio.to_thread(cls._run_check)
             except Exception as e:
                 logger.warning(f"[AUTO_PUBLISHER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)

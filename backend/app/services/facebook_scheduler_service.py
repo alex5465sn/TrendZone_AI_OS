@@ -83,9 +83,6 @@ class FacebookSchedulerService:
             return
         cls._running = True
         cls._task = asyncio.create_task(cls._loop())
-        cls._run_job("daily_auto_schedule", run_daily_auto_schedule)
-        cls._run_job("sales_sync", run_sales_sync)
-        cls._run_job("performance_recalculation", run_performance_recalculation)
         logger.info("[FB_SCHEDULER] Servico iniciado.")
 
     @classmethod
@@ -98,18 +95,32 @@ class FacebookSchedulerService:
     @classmethod
     async def _loop(cls):
         cycle = 0
+        await asyncio.sleep(30)
+        await cls._run_startup_jobs()
         while cls._running:
             try:
-                cls._run_check()
+                await asyncio.to_thread(cls._run_check)
                 cycle += 1
                 if cycle % SALES_SYNC_INTERVAL_CYCLES == 0:
-                    cls._run_job("sales_sync", run_sales_sync)
+                    await asyncio.to_thread(cls._run_job, "sales_sync", run_sales_sync)
                 if cycle % AUTO_SCHEDULE_INTERVAL_CYCLES == 0:
-                    cls._run_job("daily_auto_schedule", run_daily_auto_schedule)
-                    cls._run_job("performance_recalculation", run_performance_recalculation)
+                    await asyncio.to_thread(cls._run_job, "daily_auto_schedule", run_daily_auto_schedule)
+                    await asyncio.to_thread(cls._run_job, "performance_recalculation", run_performance_recalculation)
             except Exception as e:
                 logger.warning(f"[FB_SCHEDULER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)
+
+    @classmethod
+    async def _run_startup_jobs(cls):
+        for name, fn in [
+            ("sales_sync", run_sales_sync),
+            ("daily_auto_schedule", run_daily_auto_schedule),
+            ("performance_recalculation", run_performance_recalculation),
+        ]:
+            try:
+                await asyncio.to_thread(cls._run_job, name, fn)
+            except Exception as e:
+                logger.warning(f"[FB_SCHEDULER] Erro no startup job '{name}': {e}")
 
     @classmethod
     def _run_check(cls):
