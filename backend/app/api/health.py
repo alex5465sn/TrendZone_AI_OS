@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 def health():
 
     return ResponseBuilder.success(

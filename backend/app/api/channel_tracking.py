@@ -49,7 +49,7 @@ def available_channels(
     return ResponseBuilder.success(data=CHANNELS)
 
 
-@router.get("/")
+@router.get("")
 def list_trackings(
     channel: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -139,7 +139,7 @@ def recalculate_score(
     )
 
 
-@router.post("/")
+@router.post("")
 def create_tracking(
     payload: TrackingCreate,
     db: Session = Depends(get_db),

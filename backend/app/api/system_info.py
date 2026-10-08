@@ -27,7 +27,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 def system_info(
 
     db: Session = Depends(get_db),

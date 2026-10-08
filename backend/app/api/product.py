@@ -33,7 +33,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 
 def get_products(
 
@@ -91,7 +91,7 @@ def get_product(
     )
 
 
-@router.post("/")
+@router.post("")
 
 def create_product(
 

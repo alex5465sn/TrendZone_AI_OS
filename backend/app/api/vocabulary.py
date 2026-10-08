@@ -38,7 +38,7 @@ def get_presets(
     return ResponseBuilder.success(data=PRESETS)
 
 
-@router.get("/")
+@router.get("")
 def get_vocabulary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -62,7 +62,7 @@ def get_vocabulary(
     })
 
 
-@router.put("/")
+@router.put("")
 def update_vocabulary(
     payload: VocabularyUpdate,
     db: Session = Depends(get_db),

@@ -106,7 +106,7 @@ def seed_events(
     )
 
 
-@router.get("/")
+@router.get("")
 def list_events(
     category: Optional[str] = None,
     status: Optional[str] = None,
@@ -148,7 +148,7 @@ def list_events(
     return ResponseBuilder.success(data=result)
 
 
-@router.post("/")
+@router.post("")
 def create_event(
     payload: EventCreate,
     db: Session = Depends(get_db),

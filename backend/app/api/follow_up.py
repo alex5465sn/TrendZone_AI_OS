@@ -29,7 +29,7 @@ class FollowUpUpdate(Schema):
     status: str
 
 
-@router.get("/")
+@router.get("")
 def list_follow_ups(
     status: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -97,7 +97,7 @@ def overdue_follow_ups(
     return ResponseBuilder.success(data=result)
 
 
-@router.post("/")
+@router.post("")
 def create_follow_up(
     payload: FollowUpCreate,
     db: Session = Depends(get_db),

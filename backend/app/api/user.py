@@ -31,7 +31,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 
 def get_users(
 
@@ -54,7 +54,7 @@ def get_users(
     )
 
 
-@router.post("/")
+@router.post("")
 
 def create_user(
 

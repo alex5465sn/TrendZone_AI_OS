@@ -29,7 +29,7 @@ export async function listAvailableMarketplaces(): Promise<string[]> {
 }
 
 export async function listMyAccounts(): Promise<MarketplaceAccountItem[]> {
-    return getData<MarketplaceAccountItem[]>("/marketplace-accounts/");
+    return getData<MarketplaceAccountItem[]>("/marketplace-accounts");
 }
 
 export async function connectAccount(payload: ConnectPayload) {

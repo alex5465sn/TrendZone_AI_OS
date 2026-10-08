@@ -37,7 +37,7 @@ def record_audit(
     db.commit()
 
 
-@router.get("/")
+@router.get("")
 def list_audit_logs(
     entity_type: Optional[str] = None,
     limit: int = 100,

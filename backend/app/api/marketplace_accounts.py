@@ -55,7 +55,7 @@ def available_marketplaces():
     )
 
 
-@router.get("/")
+@router.get("")
 def my_accounts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -70,7 +70,7 @@ def my_accounts(
     )
 
 
-@router.post("/")
+@router.post("")
 def connect_account(
     data: MarketplaceAccountCreate,
     db: Session = Depends(get_db),

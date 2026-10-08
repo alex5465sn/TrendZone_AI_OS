@@ -196,7 +196,7 @@ def generate_strategies(
     )
 
 
-@router.get("/")
+@router.get("")
 def list_strategies(
     platform: Optional[str] = None,
     status: Optional[str] = None,
