@@ -42,6 +42,7 @@ import {
     listScheduledPosts,
     cancelScheduledPost,
 } from "../../services/facebookService";
+import { generateShopeeVideo } from "../../services/shopeeVideoService";
 import { analyzeProduct, type AnalyzeResult } from "../../services/commercialIntelligenceService";
 
 function calculateScore(product: ShopeeProductNode): number {
@@ -110,6 +111,10 @@ export default function Scout() {
     const [runningAutoSchedule, setRunningAutoSchedule] = useState(false);
     const [videoFile, setVideoFile] = useState("");
     const [postingVideo, setPostingVideo] = useState(false);
+    const [generatingShopeeVideo, setGeneratingShopeeVideo] = useState(false);
+    const [shopeeVideoUrl, setShopeeVideoUrl] = useState("");
+    const [shopeeVideoFile, setShopeeVideoFile] = useState("");
+    const [shopeeCaption, setShopeeCaption] = useState("");
     const [scheduling, setScheduling] = useState(false);
     const [analyzingId, setAnalyzingId] = useState<number | null>(null);
     const [analysisResults, setAnalysisResults] = useState<Record<number, AnalyzeResult>>({});
@@ -291,6 +296,9 @@ export default function Scout() {
         setPostProduct(product);
         setVideoUrl("");
         setVideoFile("");
+        setShopeeVideoUrl("");
+        setShopeeVideoFile("");
+        setShopeeCaption("");
     }
 
     useEffect(() => {
@@ -316,6 +324,39 @@ export default function Scout() {
             alert(err.response?.data?.message || "✗ Erro ao gerar o vídeo do produto.");
         } finally {
             setGeneratingVideo(false);
+        }
+    }
+
+    async function handleGenerateShopeeVideo() {
+        if (!postProduct) return;
+        try {
+            setGeneratingShopeeVideo(true);
+            const video = await generateShopeeVideo({
+                image_url: postProduct.imageUrl,
+                title: postProduct.productName,
+                price: Number(postProduct.price).toFixed(2),
+                discount_rate: postProduct.priceDiscountRate,
+                commission_rate: postProduct.commissionRate,
+                item_id: postProduct.itemId,
+            });
+            setShopeeVideoUrl(video.url);
+            setShopeeVideoFile(video.file);
+            setShopeeCaption(video.caption);
+        } catch (err: any) {
+            console.error(err);
+            alert(err.response?.data?.message || "✗ Erro ao gerar o vídeo Shopee do produto.");
+        } finally {
+            setGeneratingShopeeVideo(false);
+        }
+    }
+
+    async function handleCopyShopeeCaption() {
+        if (!shopeeCaption) return;
+        try {
+            await navigator.clipboard.writeText(shopeeCaption);
+            alert("✓ Legenda copiada! Baixe o vídeo e publique no app da Shopee.");
+        } catch {
+            alert("✗ Não foi possível copiar a legenda.");
         }
     }
 
@@ -707,6 +748,14 @@ export default function Scout() {
                             <Button
                                 color="inherit"
                                 size="small"
+                                onClick={handleGenerateShopeeVideo}
+                                disabled={generatingShopeeVideo}
+                            >
+                                {generatingShopeeVideo ? "Gerando vídeo Shopee..." : "Gerar Vídeo Shopee"}
+                            </Button>
+                            <Button
+                                color="inherit"
+                                size="small"
                                 onClick={handleSchedulePost}
                                 disabled={scheduling}
                             >
@@ -731,6 +780,32 @@ export default function Scout() {
                                 controls
                                 style={{ maxWidth: 220, borderRadius: 8 }}
                             />
+                        </Box>
+                    )}
+                    {shopeeVideoUrl && (
+                        <Box mt={2}>
+                            <Typography variant="caption" display="block" mb={1}>
+                                Prévia do vídeo Shopee (baixe e publique manualmente no app — a Shopee não tem API de upload para afiliados):
+                            </Typography>
+                            <video
+                                src={`${import.meta.env.VITE_API_URL || ""}${shopeeVideoUrl}`}
+                                controls
+                                style={{ maxWidth: 220, borderRadius: 8, display: "block", marginBottom: 8 }}
+                            />
+                            <Box display="flex" gap={1}>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="inherit"
+                                    href={`${import.meta.env.VITE_API_URL || ""}${shopeeVideoUrl}`}
+                                    download={shopeeVideoFile}
+                                >
+                                    Baixar Vídeo
+                                </Button>
+                                <Button size="small" variant="outlined" color="inherit" onClick={handleCopyShopeeCaption}>
+                                    Copiar Legenda
+                                </Button>
+                            </Box>
                         </Box>
                     )}
                 </Alert>

@@ -27,6 +27,23 @@ BRAND_COLOR = (15, 23, 42)
 ACCENT_COLOR = (16, 185, 129)
 DISCOUNT_COLOR = (239, 68, 68)
 
+THEMES = {
+    "facebook": {
+        "brand_color": (15, 23, 42),
+        "accent_color": (16, 185, 129),
+        "discount_color": (239, 68, 68),
+        "hook": "🔥 OFERTA TRENDZONE",
+        "duration_seconds": 6,
+    },
+    "shopee": {
+        "brand_color": (238, 77, 45),
+        "accent_color": (255, 255, 255),
+        "discount_color": (255, 215, 0),
+        "hook": "🛒 ACHADO SHOPEE",
+        "duration_seconds": 10,
+    },
+}
+
 
 class VideoGenerationError(Exception):
     pass
@@ -85,7 +102,15 @@ def generate_product_video(
     price: str,
     discount_rate: int | None = None,
     cta: str = "Compre agora - link na bio",
+    theme: str = "facebook",
 ) -> Path:
+
+    theme_cfg = THEMES.get(theme, THEMES["facebook"])
+    brand_color = theme_cfg["brand_color"]
+    accent_color = theme_cfg["accent_color"]
+    discount_color = theme_cfg["discount_color"]
+    hook_text = theme_cfg["hook"]
+    total_frames = FPS * theme_cfg["duration_seconds"]
 
     photo_area_h = 1300
     base_photo = _fit_cover(_download_image(image_url), WIDTH, photo_area_h)
@@ -101,8 +126,8 @@ def generate_product_video(
     writer = imageio.get_writer(str(output_path), fps=FPS, codec="libx264", quality=8)
 
     try:
-        for i in range(TOTAL_FRAMES):
-            progress = i / max(TOTAL_FRAMES - 1, 1)
+        for i in range(total_frames):
+            progress = i / max(total_frames - 1, 1)
             zoom = 1.0 + 0.18 * progress
 
             zoomed_w = int(WIDTH * zoom)
@@ -112,25 +137,25 @@ def generate_product_video(
             top = (zoomed_h - photo_area_h) // 2
             photo_frame = zoomed.crop((left, top, left + WIDTH, top + photo_area_h))
 
-            canvas = Image.new("RGB", (WIDTH, HEIGHT), BRAND_COLOR)
+            canvas = Image.new("RGB", (WIDTH, HEIGHT), brand_color)
             canvas.paste(photo_frame, (0, 0))
 
             draw = ImageDraw.Draw(canvas)
 
             draw.rectangle([0, 0, WIDTH, 130], fill=(0, 0, 0))
-            _draw_text_center(draw, "🔥 OFERTA TRENDZONE", 35, font_hook, (255, 255, 255), WIDTH - 80)
+            _draw_text_center(draw, hook_text, 35, font_hook, (255, 255, 255), WIDTH - 80)
 
             bottom_y = photo_area_h
-            draw.rectangle([0, bottom_y, WIDTH, HEIGHT], fill=BRAND_COLOR)
+            draw.rectangle([0, bottom_y, WIDTH, HEIGHT], fill=brand_color)
 
             _draw_text_center(draw, short_title, bottom_y + 30, font_cta, (255, 255, 255), WIDTH - 80)
 
             price_text = f"R$ {price}"
-            _draw_text_center(draw, price_text, bottom_y + 140, font_price, ACCENT_COLOR, WIDTH - 80)
+            _draw_text_center(draw, price_text, bottom_y + 140, font_price, accent_color, WIDTH - 80)
 
             if discount_rate:
                 _draw_text_center(
-                    draw, f"{discount_rate}% OFF", bottom_y + 250, font_discount, DISCOUNT_COLOR, WIDTH - 80
+                    draw, f"{discount_rate}% OFF", bottom_y + 250, font_discount, discount_color, WIDTH - 80
                 )
 
             _draw_text_center(draw, cta, HEIGHT - 90, font_cta, (255, 255, 255), WIDTH - 80)

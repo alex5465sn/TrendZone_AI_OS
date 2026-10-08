@@ -32,6 +32,7 @@ from app.api.sales import router as sales_router
 from app.api.inspector import router as inspector_router
 from app.api.marketplace_accounts import router as marketplace_accounts_router
 from app.api.facebook import router as facebook_router
+from app.api.shopee_video import router as shopee_video_router
 from app.api.scheduled_posts import router as scheduled_posts_router
 from app.api.published_posts import router as tracking_router, public_router as tracking_public_router
 from app.api.admin_seed import router as admin_seed_router
@@ -181,6 +182,7 @@ app.include_router(marketplace_accounts_router)
 app.include_router(mercadolivre_router)
 
 app.include_router(facebook_router)
+app.include_router(shopee_video_router)
 
 app.include_router(scheduled_posts_router)
 
