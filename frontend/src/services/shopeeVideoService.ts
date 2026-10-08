@@ -5,7 +5,7 @@ export interface GenerateShopeeVideoRequest {
     title: string;
     price: string;
     discount_rate?: number;
-    commission_rate?: number;
+    commission_rate?: string;
     item_id?: number;
 }
 

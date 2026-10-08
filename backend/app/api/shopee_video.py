@@ -26,11 +26,11 @@ class GenerateShopeeVideoRequest(BaseModel):
     title: str
     price: str
     discount_rate: int | None = None
-    commission_rate: float | None = None
+    commission_rate: str | None = None
     item_id: int | None = None
 
 
-def _build_caption(title: str, price: str, discount_rate: int | None, commission_rate: float | None, item_id: int | None) -> str:
+def _build_caption(title: str, price: str, discount_rate: int | None, commission_rate: str | None, item_id: int | None) -> str:
     lines = [
         "🛒 ACHADO SHOPEE",
         title,
