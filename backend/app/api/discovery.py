@@ -76,7 +76,7 @@ def emerging_products(
 
 @router.get("/high-commission")
 def high_commission_products(
-    min_commission: float = 20.0,
+    min_commission: float = 10.0,
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -112,6 +112,8 @@ def high_commission_products(
 
 @router.get("/trending")
 def trending_products(
+    min_sales: int = 10,
+    min_rating: float = 3.5,
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -120,8 +122,8 @@ def trending_products(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.sales > 100,
-            Product.rating >= 4.0,
+            Product.sales > min_sales,
+            Product.rating >= min_rating,
         )
         .order_by(Product.sales.desc(), Product.score.desc())
         .limit(limit)
@@ -193,10 +195,10 @@ def smart_recommendations(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= 0.15,
-            Product.rating >= 4.0,
-            Product.sales <= 200,
-            Product.sales >= 5,
+            Product.commission >= 0.08,
+            Product.rating >= 3.5,
+            Product.sales <= 500,
+            Product.sales >= 1,
         )
         .order_by(Product.created_at.desc())
         .limit(5)
@@ -207,7 +209,7 @@ def smart_recommendations(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.score >= 70,
+            Product.score >= 40,
         )
         .order_by(Product.score.desc())
         .limit(5)
@@ -218,8 +220,8 @@ def smart_recommendations(
         db.query(Product)
         .filter(
             Product.is_active == True,
-            Product.commission >= 0.20,
-            Product.rating >= 4.0,
+            Product.commission >= 0.10,
+            Product.rating >= 3.5,
         )
         .order_by(Product.commission.desc())
         .limit(5)

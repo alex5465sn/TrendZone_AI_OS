@@ -89,7 +89,8 @@ export default function ContentStrategyPage() {
             setLoading(true);
             const data = await listStrategies(filterPlatform || undefined);
             setItems(data);
-        } catch {
+        } catch (err) {
+            console.error("[ContentStrategy] Erro ao carregar:", err);
             setError("Erro ao carregar estratégias.");
         } finally {
             setLoading(false);
@@ -107,7 +108,8 @@ export default function ContentStrategyPage() {
             setGenDialog(false);
             setToast("Estratégias geradas!");
             load();
-        } catch {
+        } catch (err) {
+            console.error("[ContentStrategy] Erro ao gerar:", err);
             setError("Erro ao gerar estratégias.");
         } finally {
             setGenerating(false);

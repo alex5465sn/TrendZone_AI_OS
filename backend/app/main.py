@@ -53,6 +53,7 @@ from app.api.divulgation_groups import router as divulgation_groups_router
 from app.api.first_sale_plan import router as first_sale_plan_router
 from app.api.notifications import router as notifications_router
 
+from app.core.logger import logger
 from app.services.auto_publisher_service import AutoPublisherService
 from app.services.facebook_scheduler_service import FacebookSchedulerService
 from app.services.auto_scout_service import AutoScoutService
@@ -74,34 +75,42 @@ from app.routes import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    print("\n========================================")
-    print(settings.APP_NAME)
-    print("Inicializando Backend...")
-    print("========================================\n")
+    logger.info("========================================")
+    logger.info(f"{settings.APP_NAME} — Inicializando Backend...")
+    logger.info("========================================")
 
     run_migrations(engine)
 
     Base.metadata.create_all(bind=engine)
 
-    print("[ORQUESTRADOR] Iniciando servicos de background...")
-    AutoPublisherService.start()
-    print("[ORQUESTRADOR] AutoPublisher: OK")
-    FacebookSchedulerService.start()
-    print("[ORQUESTRADOR] FacebookScheduler: OK")
-    AutoScoutService.start()
-    print("[ORQUESTRADOR] AutoScout: OK")
-    print("[ORQUESTRADOR] Todos os servicos iniciados. Backend pronto.")
+    logger.info("[ORQUESTRADOR] Iniciando servicos de background...")
+
+    services = [
+        ("AutoPublisher", AutoPublisherService),
+        ("FacebookScheduler", FacebookSchedulerService),
+        ("AutoScout", AutoScoutService),
+    ]
+    for name, svc in services:
+        try:
+            svc.start()
+            logger.info(f"[ORQUESTRADOR] {name}: OK")
+        except Exception as e:
+            logger.exception(f"[ORQUESTRADOR] {name}: FALHOU — {e}")
+
+    logger.info("[ORQUESTRADOR] Backend pronto.")
 
     yield
 
-    print("[ORQUESTRADOR] Encerrando servicos...")
-    AutoPublisherService.stop()
-    FacebookSchedulerService.stop()
-    AutoScoutService.stop()
+    logger.info("[ORQUESTRADOR] Encerrando servicos...")
+    for name, svc in services:
+        try:
+            svc.stop()
+        except Exception as e:
+            logger.warning(f"[ORQUESTRADOR] Erro ao parar {name}: {e}")
 
-    print("\n========================================")
-    print("Backend encerrado.")
-    print("========================================\n")
+    logger.info("========================================")
+    logger.info("Backend encerrado.")
+    logger.info("========================================")
 
 
 # =====================================================

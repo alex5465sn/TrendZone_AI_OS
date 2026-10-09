@@ -22,6 +22,7 @@ from app.database.session import SessionLocal
 from app.repositories.product_repository import ProductRepository
 from app.repositories.schedule_repository import ScheduleRepository
 from app.repositories.campaign_repository import CampaignRepository
+from app.models.product import Product
 from app.models.campaign import Campaign
 from app.services.opportunity_engine import OpportunityEngine
 
@@ -56,7 +57,7 @@ class AutoPublisherService:
             try:
                 await asyncio.to_thread(cls._run_check)
             except Exception as e:
-                logger.warning(f"[AUTO_PUBLISHER] Erro no ciclo: {e}")
+                logger.exception(f"[AUTO_PUBLISHER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)
 
     @classmethod
@@ -75,22 +76,33 @@ class AutoPublisherService:
                 if sched.ultimo_run == today:
                     continue
 
-                cls._generate_campaigns(db, sched.quantos or 5)
+                try:
+                    cls._generate_campaigns(db, sched.quantos or 5)
 
-                sched.ultimo_run = today
-                sched.updated_at = datetime.utcnow()
-                ScheduleRepository.update(db, sched)
+                    sched.ultimo_run = today
+                    sched.updated_at = datetime.utcnow()
+                    ScheduleRepository.update(db, sched)
+                    db.commit()
 
-                logger.info(
-                    f"[AUTO_PUBLISHER] Execucao automatica concluida "
-                    f"para agendamento '{sched.nicho}' ({sched.quantos} produto(s))."
-                )
+                    logger.info(
+                        f"[AUTO_PUBLISHER] Execucao automatica concluida "
+                        f"para agendamento '{sched.nicho}' ({sched.quantos} produto(s))."
+                    )
+                except Exception as e:
+                    db.rollback()
+                    logger.exception(f"[AUTO_PUBLISHER] Erro ao processar agendamento '{sched.nicho}': {e}")
         finally:
             db.close()
 
     @classmethod
     def _generate_campaigns(cls, db, limit: int):
-        products = ProductRepository.get_all(db)
+        products = (
+            db.query(Product)
+            .filter(Product.is_active == True, Product.score >= 30)
+            .order_by(Product.score.desc())
+            .limit(200)
+            .all()
+        )
         products_dict = [
             {
                 "id": p.id, "item_id": p.item_id, "name": p.name,
@@ -105,15 +117,16 @@ class AutoPublisherService:
 
         opportunities = OpportunityEngine.find(products_dict, limit=limit)
 
+        draft_product_ids = {
+            c.product_id
+            for c in db.query(Campaign).filter(Campaign.status == "DRAFT").all()
+        }
+
         for op in opportunities:
             product = op["product"]
             content = op["content"]
 
-            existing = [
-                c for c in CampaignRepository.get_all(db)
-                if c.product_id == product["id"] and c.status == "DRAFT"
-            ]
-            if existing:
+            if product["id"] in draft_product_ids:
                 continue
 
             campaign = Campaign(

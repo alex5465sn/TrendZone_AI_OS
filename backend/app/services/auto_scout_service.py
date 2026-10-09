@@ -58,7 +58,7 @@ class AutoScoutService:
             try:
                 await asyncio.to_thread(cls._run_once)
             except Exception as e:
-                logger.warning(f"[AUTO_SCOUT] Erro no ciclo: {e}")
+                logger.exception(f"[AUTO_SCOUT] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)
 
     @classmethod
@@ -116,7 +116,7 @@ class AutoScoutService:
             )
         except Exception as e:
             db.rollback()
-            logger.warning(
+            logger.exception(
                 f"[AUTO_SCOUT] [{marketplace.upper()}] "
                 f"Falha ao varrer '{keyword}': {e}"
             )

@@ -107,7 +107,7 @@ class FacebookSchedulerService:
                     await asyncio.to_thread(cls._run_job, "daily_auto_schedule", run_daily_auto_schedule)
                     await asyncio.to_thread(cls._run_job, "performance_recalculation", run_performance_recalculation)
             except Exception as e:
-                logger.warning(f"[FB_SCHEDULER] Erro no ciclo: {e}")
+                logger.exception(f"[FB_SCHEDULER] Erro no ciclo: {e}")
             await asyncio.sleep(CHECK_INTERVAL_SECONDS)
 
     @classmethod
@@ -146,22 +146,29 @@ class FacebookSchedulerService:
                     post.error_message = ""
                     logger.info(f"[FB_SCHEDULER] Post agendado #{post.id} publicado com sucesso.")
 
-                    product = ProductRepository.get_by_item_id(db, post.product_item_id)
-                    nome_produto = product.name if product else f"produto #{post.product_item_id}"
-                    send_push_notification(
-                        title="✅ Post publicado no Facebook",
-                        message=f"{nome_produto} foi publicado com sucesso na sua pagina.",
-                    )
+                    try:
+                        product = ProductRepository.get_by_item_id(db, post.product_item_id)
+                        nome_produto = product.name if product else f"produto #{post.product_item_id}"
+                        send_push_notification(
+                            title="✅ Post publicado no Facebook",
+                            message=f"{nome_produto} foi publicado com sucesso na sua pagina.",
+                        )
+                    except Exception:
+                        logger.warning(f"[FB_SCHEDULER] Falha ao enviar push para post #{post.id} (post publicado OK).")
                 except Exception as e:
                     post.status = "erro"
                     post.error_message = str(e)[:500]
-                    logger.warning(f"[FB_SCHEDULER] Falha ao publicar post agendado #{post.id}: {e}")
-                    send_push_notification(
-                        title="❌ Falha ao publicar post",
-                        message=f"Post #{post.id} nao pode ser publicado: {str(e)[:150]}",
-                        tags="warning",
-                    )
+                    logger.exception(f"[FB_SCHEDULER] Falha ao publicar post agendado #{post.id}: {e}")
+                    try:
+                        send_push_notification(
+                            title="❌ Falha ao publicar post",
+                            message=f"Post #{post.id} nao pode ser publicado: {str(e)[:150]}",
+                            tags="warning",
+                        )
+                    except Exception:
+                        pass
 
                 ScheduledPostRepository.update(db, post)
+                db.commit()
         finally:
             db.close()

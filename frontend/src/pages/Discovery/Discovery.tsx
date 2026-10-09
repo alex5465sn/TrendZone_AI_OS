@@ -88,8 +88,9 @@ export default function Discovery() {
             else if (tab === 1) setTrending(await getTrendingProducts());
             else if (tab === 2) setHighComm(await getHighCommissionProducts());
             else if (tab === 3) setRecs(await getSmartRecommendations());
-        } catch {
-            setError("Erro ao carregar dados.");
+        } catch (err) {
+            console.error("[Discovery] Erro ao carregar:", err);
+            setError("Erro ao carregar dados. Tente novamente.");
         } finally {
             setLoading(false);
         }
