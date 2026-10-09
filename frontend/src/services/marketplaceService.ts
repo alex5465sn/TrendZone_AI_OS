@@ -81,14 +81,12 @@ export interface MarketplaceFilters {
 }
 
 // A API da Shopee costuma responder em poucos segundos, mas em buscas
-// sem cache (primeira chamada para uma palavra-chave) já foi observado
-// levar mais de 10s — por isso o timeout tem folga para não estourar
-// antes da resposta chegar e gerar "Erro ao buscar produtos" indevido.
-const MARKETPLACE_TIMEOUT = 20000; // 20s — chamadas externas não devem travar a UI
+// sem cache (primeira chamada para uma palavra-chave) já foi observada
+// latência de até ~15s, de forma variável — por isso o timeout usa a
+// mesma folga generosa do Mercado Livre, para não estourar antes da
+// resposta chegar e gerar "Erro ao buscar produtos" indevido.
+const MARKETPLACE_TIMEOUT = 25000; // 25s — chamadas externas não devem travar a UI
 
-// A busca de catálogo do Mercado Livre varre vários candidatos até achar
-// os que têm oferta ativa (pode levar ~9s no backend) — por isso usa um
-// timeout maior do que a Shopee para não estourar antes da resposta chegar.
 const MARKETPLACE_TIMEOUT_MERCADO_LIVRE = 25000; // 25s
 
 export async function searchShopeeProducts(filters: MarketplaceFilters): Promise<ShopeeProductResponse> {
