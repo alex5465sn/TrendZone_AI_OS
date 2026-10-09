@@ -9,6 +9,8 @@ from app.models.user import User
 from app.models.product import Product
 from app.api.response import ResponseBuilder
 
+from app.services.momentum_service import MomentumService
+
 router = APIRouter(
     prefix="/discovery",
     tags=["Product Discovery"],
@@ -21,6 +23,25 @@ class DiscoveryFilter(Schema):
     min_rating: float = 4.0
     min_sales: int = 10
     sort_by: str = "emerging"
+
+
+@router.get("/radar")
+def product_radar(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Product Radar — prioriza produtos COMEÇANDO a vencer.
+
+    radar_score (0–100) = 50% momentum (crescimento de
+    vendas desde o baseline de até 7 dias) + 30% score
+    interno + 20% aderência à faixa de preço R$20–100.
+    """
+
+    items = MomentumService.radar(db, limit=max(1, min(limit, 50)))
+
+    return ResponseBuilder.success(data=items)
 
 
 @router.get("/emerging")

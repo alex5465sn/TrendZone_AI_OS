@@ -20,9 +20,37 @@ from app.repositories.base_repository import BaseRepository
 class ProductRepository(BaseRepository[Product]):
     """
     Repository da entidade Product.
+
+    Toda criação/atualização grava um ProductSnapshot
+    (deduplicado no MomentumService) — é esse histórico
+    que alimenta o cálculo de momentum do Product Radar.
     """
 
     model = Product
+
+    @classmethod
+    def create(cls, db: Session, obj: Product) -> Product:
+        entity = super().create(db, obj)
+
+        cls._snapshot(db, entity)
+
+        return entity
+
+    @classmethod
+    def update(cls, db: Session, obj: Product) -> Product:
+        entity = super().update(db, obj)
+
+        cls._snapshot(db, entity)
+
+        return entity
+
+    @staticmethod
+    def _snapshot(db: Session, entity: Product) -> None:
+        # Import local evita import circular
+        # (momentum_service -> models -> ...).
+        from app.services.momentum_service import MomentumService
+
+        MomentumService.record(db, entity)
 
     # =====================================================
     # ITEM ID

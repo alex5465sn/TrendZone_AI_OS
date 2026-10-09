@@ -41,3 +41,16 @@ export async function getSmartRecommendations() {
 export async function getNicheGaps() {
     return getData<any[]>("/discovery/niche-gaps");
 }
+
+export interface RadarItem extends DiscoveryProduct {
+    marketplace: string;
+    momentum_pct: number | null;
+    price_change_pct: number | null;
+    trend: "up" | "down" | "flat" | "sem_base";
+    radar_score: number;
+    reasons: string[];
+}
+
+export async function getProductRadar(limit = 20): Promise<RadarItem[]> {
+    return getData<RadarItem[]>(`/discovery/radar?limit=${limit}`);
+}

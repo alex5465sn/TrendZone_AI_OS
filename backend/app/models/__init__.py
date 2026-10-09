@@ -43,9 +43,11 @@ from app.models.ai_agent_config import AIAgentConfig
 from app.models.divulgation_group import DivulgationGroup
 from app.models.first_sale_plan import FirstSalePlan
 from app.models.notification import Notification
+from app.models.product_snapshot import ProductSnapshot
 
 __all__ = (
     "Product",
+    "ProductSnapshot",
     "SystemInfo",
     "User",
     "Campaign",
