@@ -80,7 +80,11 @@ export interface MarketplaceFilters {
     sortType?: number;
 }
 
-const MARKETPLACE_TIMEOUT = 10000; // 10s — chamadas externas não devem travar a UI
+// A API da Shopee costuma responder em poucos segundos, mas em buscas
+// sem cache (primeira chamada para uma palavra-chave) já foi observado
+// levar mais de 10s — por isso o timeout tem folga para não estourar
+// antes da resposta chegar e gerar "Erro ao buscar produtos" indevido.
+const MARKETPLACE_TIMEOUT = 20000; // 20s — chamadas externas não devem travar a UI
 
 // A busca de catálogo do Mercado Livre varre vários candidatos até achar
 // os que têm oferta ativa (pode levar ~9s no backend) — por isso usa um
