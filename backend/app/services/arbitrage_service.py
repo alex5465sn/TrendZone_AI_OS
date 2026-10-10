@@ -15,7 +15,7 @@ from datetime import datetime
 
 from app.services.base_service import BaseService
 from app.services.shopee_service import ShopeeService
-from app.services.marketplace_service import MarketplaceService
+from app.services.marketplace_service import MarketplaceBusiness
 
 
 @dataclass
@@ -120,7 +120,7 @@ class ArbitrageService(BaseService):
 
         # Buscar no Mercado Livre
         try:
-            ml_result = await MarketplaceService.search_products(
+            ml_result = await MarketplaceBusiness.search_products(
                 keyword=product_name,
                 limit=1,
             )
