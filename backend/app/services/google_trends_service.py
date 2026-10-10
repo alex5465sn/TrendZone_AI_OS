@@ -117,7 +117,7 @@ class GoogleTrendsService(BaseService):
             return result
 
         except Exception as e:
-            cls.log_exception(f"Erro ao buscar tendência: {e}")
+            cls.log_error(f"Erro ao buscar tendência: {e}")
             return None
 
     # =====================================================
