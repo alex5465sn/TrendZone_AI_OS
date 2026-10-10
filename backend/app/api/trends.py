@@ -7,10 +7,9 @@ Trends API
 Endpoints para Google Trends e Arbitragem.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 
-from app.core.security import get_current_user
 from app.services.google_trends_service import GoogleTrendsService
 from app.services.arbitrage_service import ArbitrageService
 from app.api.response import success_response, error_response
