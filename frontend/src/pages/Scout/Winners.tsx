@@ -23,7 +23,7 @@ import {
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
-import { apiCall } from "../../services/apiService";
+import { getData } from "../../services/apiResponse";
 
 interface Winner {
   product_item_id: number;
@@ -68,9 +68,9 @@ export const Winners: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiCall("/discovery/winners?limit=10&days=7");
-      if (response.success && response.data.winners) {
-        setWinners(response.data.winners);
+      const data = await getData<{ winners: Winner[] }>("/discovery/winners?limit=10&days=7");
+      if (data.winners) {
+        setWinners(data.winners);
       } else {
         setError("Nenhum vencedor encontrado ainda");
       }

@@ -826,13 +826,12 @@ export default function Scout() {
                             </Box>
                         </Box>
                     )}
-                </Alert>
 
                 {/* Fase 2: Criativos Estruturados */}
                 {postProduct && (
                     <StructuredCreatives
                         product={{
-                            productName: postProduct.name,
+                            productName: postProduct.productName,
                             price: postProduct.price,
                             priceDiscountRate: postProduct.priceDiscountRate,
                             offerLink: postProduct.offerLink,

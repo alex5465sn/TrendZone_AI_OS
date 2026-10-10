@@ -10,13 +10,15 @@ interface ProductForPost {
  * Ângulos estruturados de criativo (Fase 2 do Product Hunter)
  * Cada ângulo resolve um problema diferente de persuasão
  */
-export enum CreativeAngle {
-    PROBLEM = "problem",           // "Se você sofre com X..."
-    TRANSFORMATION = "transformation", // "Antes/Depois"
-    THREE_REASONS = "three_reasons",   // "3 motivos para comprar"
-    DEMONSTRATION = "demonstration",   // "Como funciona"
-    COMPARISON = "comparison",         // "Vs. alternativas"
-}
+export const CreativeAngle = {
+    PROBLEM: "problem",
+    TRANSFORMATION: "transformation",
+    THREE_REASONS: "three_reasons",
+    DEMONSTRATION: "demonstration",
+    COMPARISON: "comparison",
+} as const;
+
+export type CreativeAngle = typeof CreativeAngle[keyof typeof CreativeAngle];
 
 const EMOJIS = ["🔥", "⚡", "✅", "🎯", "💥", "🛒"];
 const HOOKS = [
