@@ -52,6 +52,7 @@ from app.api.automation import router as automation_router
 from app.api.audit_log import router as audit_log_router
 from app.api.vocabulary import router as vocabulary_router
 from app.api.whatsapp import router as whatsapp_router
+from app.api.trends import router as trends_router
 from app.api.ai_agent import router as ai_agent_router
 from app.api.divulgation_groups import router as divulgation_groups_router
 from app.api.first_sale_plan import router as first_sale_plan_router
@@ -252,6 +253,8 @@ app.include_router(audit_log_router)
 app.include_router(vocabulary_router)
 
 app.include_router(whatsapp_router)
+
+app.include_router(trends_router)
 
 app.include_router(ai_agent_router)
 app.include_router(divulgation_groups_router)
