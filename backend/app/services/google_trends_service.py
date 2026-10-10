@@ -12,7 +12,6 @@ import asyncio
 from typing import Optional, Dict, List
 from datetime import datetime, timedelta
 
-import aiohttp
 from pytrends.request import TrendReq
 
 from app.services.base_service import BaseService

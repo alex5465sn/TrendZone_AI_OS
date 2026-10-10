@@ -6,7 +6,6 @@ from fastapi.staticfiles import StaticFiles
 
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlAlchemyIntegration
 
 from app.core.settings import settings
 from app.core.exceptions import (
@@ -131,7 +130,6 @@ if settings.SENTRY_DSN:
         dsn=settings.SENTRY_DSN,
         integrations=[
             FastApiIntegration(),
-            SqlAlchemyIntegration(),
         ],
         traces_sample_rate=0.1,  # 10% das requisições
         environment=settings.ENVIRONMENT,
