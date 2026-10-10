@@ -840,7 +840,8 @@ export default function Scout() {
                         }}
                     />
                 )}
-            </Box>
+            </Alert>
+            )}
 
             {/* Fase 3: Produtos Vencedores */}
             <Box sx={{ mt: 4 }}>
