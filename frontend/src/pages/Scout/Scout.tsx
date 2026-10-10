@@ -31,6 +31,8 @@ import { searchShopeeProducts, type ShopeeProductNode } from "../../services/mar
 import { createProduct } from "../../services/productService";
 import { CATEGORIES, getKeywordsForCategories } from "../../constants/categories";
 import { generateFacebookPostVariations } from "../../utils/postGenerator";
+import { StructuredCreatives } from "./StructuredCreatives";
+import { Winners } from "./Winners";
 import { createTrackingLink } from "../../services/trackingService";
 import {
     getFacebookStatus,
@@ -825,7 +827,25 @@ export default function Scout() {
                         </Box>
                     )}
                 </Alert>
+
+                {/* Fase 2: Criativos Estruturados */}
+                {postProduct && (
+                    <StructuredCreatives
+                        product={{
+                            productName: postProduct.name,
+                            price: postProduct.price,
+                            priceDiscountRate: postProduct.priceDiscountRate,
+                            offerLink: postProduct.offerLink,
+                            commissionRate: postProduct.commissionRate,
+                        }}
+                    />
+                )}
             )}
+
+            {/* Fase 3: Produtos Vencedores */}
+            <Box sx={{ mt: 4 }}>
+                <Winners />
+            </Box>
 
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>

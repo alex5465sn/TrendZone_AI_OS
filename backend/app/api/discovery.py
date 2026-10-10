@@ -10,6 +10,7 @@ from app.models.product import Product
 from app.api.response import ResponseBuilder
 
 from app.services.momentum_service import MomentumService
+from app.services.winner_detector import WinnerDetector
 
 router = APIRouter(
     prefix="/discovery",
@@ -269,3 +270,47 @@ def smart_recommendations(
     }
 
     return ResponseBuilder.success(data=result)
+
+
+@router.get("/winners")
+def get_winners(
+    limit: int = 10,
+    days: int = 7,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retorna produtos vencedores (Fase 3 do Product Hunter).
+    
+    Baseado em:
+    - Cliques reais (tracking)
+    - Vendas confirmadas
+    - Taxa de conversão
+    - Momentum (crescimento)
+    
+    Recomendações:
+    - DUPLICAR: vencedor claro, duplicar criativos
+    - OTIMIZAR: bom desempenho, melhorar criativo
+    - PAUSAR: sem vendas ou taxa muito baixa
+    - OBSERVAR: dados insuficientes
+    """
+
+    try:
+        winners = WinnerDetector.get_top_winners(
+            db,
+            limit=limit,
+            days_back=days,
+        )
+
+        return ResponseBuilder.success(
+            data={
+                "winners": winners,
+                "total": len(winners),
+                "period_days": days,
+            }
+        )
+
+    except Exception as e:
+        return ResponseBuilder.error(
+            message=f"Erro ao buscar vencedores: {str(e)}"
+        )
