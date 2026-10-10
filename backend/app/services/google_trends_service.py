@@ -78,11 +78,8 @@ class GoogleTrendsService(BaseService):
             pytrends = TrendReq(hl="pt-BR", tz=180)  # tz=180 é UTC-3 (Brasil)
             
             # Buscar interesse ao longo do tempo
-            pytrends.build(
-                kw_list=[keyword],
-                timeframe=timeframe,
-                geo=geo,
-            )
+            # Nota: pytrends.build() é o método correto
+            pytrends.build([keyword], timeframe=timeframe, geo=geo)
 
             interest_over_time = pytrends.interest_over_time()
             related_queries = pytrends.related_queries()
