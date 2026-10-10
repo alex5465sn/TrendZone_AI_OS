@@ -4,6 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlAlchemyIntegration
+
 from app.core.settings import settings
 from app.core.exceptions import (
     TrendZoneException,
@@ -116,6 +120,26 @@ async def lifespan(app: FastAPI):
 # =====================================================
 # Aplicação
 # =====================================================
+
+# =====================================================
+# Sentry — Error Tracking
+# =====================================================
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[
+            FastApiIntegration(),
+            SqlAlchemyIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% das requisições
+        environment=settings.ENVIRONMENT,
+        release=settings.VERSION,
+    )
+    logger.info("[SENTRY] Inicializado com sucesso")
+else:
+    logger.warning("[SENTRY] DSN não configurado — error tracking desativado")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
