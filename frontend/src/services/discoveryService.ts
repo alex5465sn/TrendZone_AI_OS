@@ -47,6 +47,7 @@ export interface RadarItem extends DiscoveryProduct {
     momentum_pct: number | null;
     price_change_pct: number | null;
     trend: "up" | "down" | "flat" | "sem_base";
+    trend_signal: "rising" | "stable" | "declining" | "unknown" | null;
     radar_score: number;
     reasons: string[];
 }

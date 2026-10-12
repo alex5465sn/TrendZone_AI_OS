@@ -105,6 +105,12 @@ function RadarCard({ item }: { item: RadarItem }) {
                 <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
                     <Chip label={`Radar ${item.radar_score.toFixed(0)}/100`} size="small" sx={{ height: 20, fontSize: 10, backgroundColor: "#F9731622", color: "#F97316" }} />
                     <Chip label={t.label} size="small" sx={{ height: 20, fontSize: 10, backgroundColor: t.bg, color: t.color }} />
+                    {item.trend_signal === "rising" && (
+                        <Chip label="📈 Em alta no Google" size="small" sx={{ height: 20, fontSize: 10, backgroundColor: "#10B98122", color: "#10B981" }} />
+                    )}
+                    {item.trend_signal === "declining" && (
+                        <Chip label="📉 Perdendo busca" size="small" sx={{ height: 20, fontSize: 10, backgroundColor: "#EF444422", color: "#EF4444" }} />
+                    )}
                     {item.momentum_pct !== null && (
                         <Chip
                             label={`${item.momentum_pct >= 0 ? "+" : ""}${item.momentum_pct.toFixed(0)}% vendas`}
