@@ -79,7 +79,7 @@ def refresh_token(
 
 
 @router.get("/me", response_model=dict)
-def get_current_user(
+def me(
     authorization: str = Header(None),
     db: Session = Depends(get_db),
 ):

@@ -13,7 +13,7 @@ from typing import List, Optional
 from app.services.google_trends_service import GoogleTrendsService
 from app.services.arbitrage_service import ArbitrageService
 from app.api.response import ResponseBuilder
-from app.api.auth import get_current_user
+from app.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/trends",

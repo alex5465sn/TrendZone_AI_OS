@@ -98,7 +98,9 @@ class GoogleTrendsService(BaseService):
             result = {
                 "keyword": keyword,
                 "trend": trend,
-                "interest_over_time": interest_over_time[keyword].tail(7).to_dict(),
+                "interest_over_time": cls._series_to_json_safe(
+                    interest_over_time[keyword].tail(7)
+                ),
                 "related_queries": cls._extract_related_queries(related_queries, keyword),
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -146,7 +148,35 @@ class GoogleTrendsService(BaseService):
         if df is None or df.empty:
             return []
 
-        return df.to_dict("records")
+        return [
+            {str(k): GoogleTrendsService._json_safe_value(v) for k, v in rec.items()}
+            for rec in df.to_dict("records")
+        ]
+
+    # =====================================================
+    # CONVERSÃO JSON-SAFE (numpy / pandas -> tipos nativos)
+    # =====================================================
+
+    @staticmethod
+    def _json_safe_value(value):
+        """Converte escalares numpy e Timestamps em tipos serializáveis por JSON."""
+        if hasattr(value, "isoformat"):  # pandas.Timestamp / datetime
+            return value.isoformat()
+        if hasattr(value, "item"):  # numpy.int64 / float64 / bool_
+            return value.item()
+        return value
+
+    @staticmethod
+    def _series_to_json_safe(series) -> Dict[str, float]:
+        """Converte uma Series do pandas em dict com chaves ISO e valores nativos."""
+        return {
+            (
+                idx.isoformat()
+                if hasattr(idx, "isoformat")
+                else str(idx)
+            ): GoogleTrendsService._json_safe_value(val)
+            for idx, val in series.items()
+        }
 
     # =====================================================
     # BUSCAR MÚLTIPLAS KEYWORDS
