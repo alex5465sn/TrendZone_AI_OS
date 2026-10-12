@@ -25,6 +25,7 @@ from app.services.product_score import ProductScore
 from app.services.decision_engine import DecisionEngine
 from app.services.content_generator_service import ContentGeneratorService
 from app.core.exceptions import ProductAlreadyExists
+from app.core.logger import TZLogger
 from app.core.settings import settings
 
 from app.api.response import ResponseBuilder
@@ -88,7 +89,11 @@ def _auto_add_if_promoted(db: Session, node: dict, decision: str, score: float) 
         return True
     except ProductAlreadyExists:
         return True
-    except Exception:
+    except Exception as exc:
+        TZLogger.error(
+            "MARKETPLACE",
+            f"auto_add_if_promoted falhou para itemId={node.get('itemId')}: {exc}",
+        )
         return False
 
 

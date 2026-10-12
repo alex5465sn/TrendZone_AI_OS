@@ -42,8 +42,6 @@ from app.repositories.product_snapshot_repository import (
     ProductSnapshotRepository,
 )
 
-from app.services.google_trends_service import GoogleTrendsService
-
 
 # Deduplicação: intervalo mínimo entre snapshots
 # do mesmo produto (horas).
