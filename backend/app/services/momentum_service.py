@@ -374,16 +374,24 @@ class MomentumService:
                 }
             )
 
+        # Ordenar ANTES de aplicar o sinal do Google Trends:
+        # items está na ordem do score interno (query), mas o
+        # retorno é por radar_score — aplicar no slice errado
+        # daria trend_signal=None nos itens retornados.
+        items.sort(key=lambda x: x["radar_score"], reverse=True)
+
+        top = items[:limit]
+
         # Sinal do Google Trends (20% do radar_score): busca em
         # lote apenas para os itens retornados, com keyword curta
         # (nomes longos de marketplace não retornam dados). A
         # busca é bloqueante, mas roda na threadpool do FastAPI e
         # o cache de 1h do GoogleTrendsService evita refetch.
-        cls._apply_trend_signal(items[:limit])
+        cls._apply_trend_signal(top)
 
-        items.sort(key=lambda x: x["radar_score"], reverse=True)
+        top.sort(key=lambda x: x["radar_score"], reverse=True)
 
-        return items[:limit]
+        return top
 
     # =====================================================
     # HELPERS

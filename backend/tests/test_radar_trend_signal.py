@@ -196,3 +196,39 @@ def test_radar_trend_failure_keeps_neutral_score(db_session, monkeypatch):
     assert items[0]["radar_score"] > 0  # score neutro não zera o radar
 
     GoogleTrendsService.clear_cache()
+
+
+def test_radar_trend_applied_to_final_top_after_sort(db_session, monkeypatch):
+    """
+    Regressão: items vem da query ordenada por score INTERNO, mas o
+    retorno é por radar_score — aplicar o trend no slice errado
+    deixava trend_signal=None nos produtos retornados.
+    """
+    GoogleTrendsService.clear_cache()
+
+    # Score interno ALTO, preço fora da faixa => radar_score baixo.
+    _add_product(db_session, 1, "Produto Score Alto Sem Radar", score=99, sales=5, price=500.0)
+
+    # Score interno MENOR, preço na faixa ideal => radar_score maior.
+    _add_product(db_session, 2, "Produto Radar Campeao", score=60, sales=900, price=50.0)
+
+    signals_received = {}
+
+    def _fake_sync(cls, kws):
+        signals_received["keywords"] = list(kws)
+        return {kw: "rising" for kw in kws}
+
+    monkeypatch.setattr(
+        GoogleTrendsService, "get_trend_signal_sync", classmethod(_fake_sync)
+    )
+
+    items = MomentumService.radar(db_session, limit=1)
+
+    # O top-1 por radar_score é o produto 2 — é ELE que precisa
+    # receber o sinal (antes da correção, o slice pegava o produto 1).
+    assert len(items) == 1
+    assert items[0]["id"] == 2
+    assert items[0]["trend_signal"] == "rising"
+    assert "produto radar campeao" in signals_received["keywords"]
+
+    GoogleTrendsService.clear_cache()
