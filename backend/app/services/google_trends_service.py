@@ -121,7 +121,7 @@ class GoogleTrendsService(BaseService):
     @staticmethod
     def _fetch_from_google(keyword: str, timeframe: str, geo: str):
         pytrends = TrendReq(hl="pt-BR", tz=180)  # tz=180 é UTC-3 (Brasil)
-        pytrends.build([keyword], timeframe=timeframe, geo=geo)
+        pytrends.build_payload([keyword], timeframe=timeframe, geo=geo)
         return pytrends.interest_over_time(), pytrends.related_queries()
 
     # =====================================================
