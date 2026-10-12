@@ -35,9 +35,10 @@ def product_radar(
     """
     Product Radar — prioriza produtos COMEÇANDO a vencer.
 
-    radar_score (0–100) = 50% momentum (crescimento de
-    vendas desde o baseline de até 7 dias) + 30% score
-    interno + 20% aderência à faixa de preço R$20–100.
+    radar_score (0–100) = 40% momentum (crescimento de
+    vendas desde o baseline de até 7 dias) + 25% score
+    interno + 15% aderência à faixa de preço R$20–100
+    + 20% sinal do Google Trends (trend_signal).
     """
 
     items = MomentumService.radar(db, limit=max(1, min(limit, 50)))

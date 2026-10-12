@@ -17,14 +17,17 @@ Responsabilidades:
                    crescimento de vendas, variação de
                    preço e tendência.
 3. radar()       — ranqueia produtos combinando
-                   momentum (50%) + score interno
-                   (30%) + aderência à faixa de preço
-                   ideal R$20–100 (20%), com motivos
+                   momentum (40%) + score interno
+                   (25%) + aderência à faixa de preço
+                   ideal R$20–100 (15%) + sinal do
+                   Google Trends (20%), com motivos
                    legíveis para o card da UI.
 
 Não decide (isso é do DecisionEngine) e não
 substitui o Score — complementa com tempo.
 """
+
+import re
 
 from datetime import datetime, timedelta
 
@@ -59,12 +62,26 @@ PRICE_BAND_MIN = 20.0
 
 PRICE_BAND_MAX = 100.0
 
-# Pesos do radar_score (0–100).
-WEIGHT_MOMENTUM = 0.50
+# Pesos do radar_score (0–100). O sinal do Google Trends
+# (20%) entrou rebalanceando momentum/score/preço.
+WEIGHT_MOMENTUM = 0.40
 
-WEIGHT_SCORE = 0.30
+WEIGHT_SCORE = 0.25
 
-WEIGHT_PRICE = 0.20
+WEIGHT_PRICE = 0.15
+
+WEIGHT_TREND = 0.20
+
+# Score do sinal de tendência do Google Trends (0–100).
+# "unknown" (sem dados) é neutro — ausência de sinal não
+# deve penalizar nem premiar o produto.
+TREND_SIGNAL_SCORE = {
+    "rising": 85.0,
+    "stable": 50.0,
+    "declining": 15.0,
+}
+
+TREND_SIGNAL_SCORE_DEFAULT = 50.0
 
 
 class MomentumService:
@@ -204,9 +221,12 @@ class MomentumService:
         Ranqueia produtos ativos por radar_score:
 
         50% momentum (crescimento de vendas desde o
-        baseline, penalizando queda) + 30% score
-        interno + 20% aderência à faixa de preço
-        R$20–100.
+        baseline, penalizando queda) + 25% score
+        interno + 15% aderência à faixa de preço
+        R$20–100 + 20% sinal do Google Trends
+        (trend_signal via GoogleTrendsService, com
+        cache de 1h e lote de até 5 keywords por
+        requisição).
 
         Produtos sem baseline ainda aparecem (score +
         preço), mas atrás de quem tem momentum
@@ -319,7 +339,8 @@ class MomentumService:
                         100.0,
                         WEIGHT_MOMENTUM * momentum_component
                         + WEIGHT_SCORE * score_component
-                        + WEIGHT_PRICE * price_component,
+                        + WEIGHT_PRICE * price_component
+                        + WEIGHT_TREND * TREND_SIGNAL_SCORE_DEFAULT,
                     ),
                 ),
                 2,
@@ -347,10 +368,18 @@ class MomentumService:
                     "momentum_pct": m["sales_growth_pct"],
                     "price_change_pct": m["price_change_pct"],
                     "trend": m["trend"],
+                    "trend_signal": None,
                     "radar_score": radar_score,
                     "reasons": reasons,
                 }
             )
+
+        # Sinal do Google Trends (20% do radar_score): busca em
+        # lote apenas para os itens retornados, com keyword curta
+        # (nomes longos de marketplace não retornam dados). A
+        # busca é bloqueante, mas roda na threadpool do FastAPI e
+        # o cache de 1h do GoogleTrendsService evita refetch.
+        cls._apply_trend_signal(items[:limit])
 
         items.sort(key=lambda x: x["radar_score"], reverse=True)
 
@@ -359,6 +388,81 @@ class MomentumService:
     # =====================================================
     # HELPERS
     # =====================================================
+
+    @classmethod
+    def _apply_trend_signal(cls, items: list[dict]) -> None:
+        """
+        Busca o sinal do Google Trends para os itens do radar e
+        aplica ao radar_score (peso WEIGHT_TREND). Nunca propaga
+        exceção — falha de trends degrada para sinal neutro.
+        """
+        if not items:
+            return
+
+        from app.services.google_trends_service import GoogleTrendsService
+
+        keywords = {
+            item["id"]: cls._trend_keyword(item["name"]) for item in items
+        }
+
+        unique_keywords = sorted({kw for kw in keywords.values() if kw})
+
+        if not unique_keywords:
+            return
+
+        try:
+            signals = GoogleTrendsService.get_trend_signal_sync(unique_keywords)
+        except Exception:
+            logger.exception(
+                "[MOMENTUM] Falha ao buscar sinal do Google Trends — "
+                "radar segue com sinal neutro."
+            )
+
+            return
+
+        for item in items:
+            signal = signals.get(keywords.get(item["id"]) or "")
+
+            if not signal:
+                continue
+
+            item["trend_signal"] = signal
+
+            trend_component = TREND_SIGNAL_SCORE.get(
+                signal, TREND_SIGNAL_SCORE_DEFAULT
+            )
+
+            base_without_trend = item["radar_score"] - (
+                WEIGHT_TREND * TREND_SIGNAL_SCORE_DEFAULT
+            )
+
+            item["radar_score"] = round(
+                max(
+                    0.0,
+                    min(
+                        100.0,
+                        base_without_trend + WEIGHT_TREND * trend_component,
+                    ),
+                ),
+                2,
+            )
+
+            if signal == "rising":
+                item["reasons"].insert(0, "Em alta no Google Trends")
+
+            elif signal == "declining":
+                item["reasons"].append("Perdendo busca no Google Trends")
+
+    @staticmethod
+    def _trend_keyword(name: str) -> str:
+        """
+        Reduz um nome longo de produto a uma keyword curta
+        (3 primeiras palavras, sem pontuação) — nomes completos
+        de marketplace não retornam dados no Google Trends.
+        """
+        words = re.sub(r"[^\w\s]", " ", (name or "")).split()
+
+        return " ".join(words[:3]).strip().lower()
 
     @staticmethod
     def _price_band_fit(price: float) -> float:
