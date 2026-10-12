@@ -9,13 +9,25 @@ marketplaces (Shopee, Mercado Livre, Amazon)
 e identifica oportunidades de arbitragem.
 """
 
+import asyncio
 from typing import Optional, Dict, List
 from dataclasses import dataclass
 from datetime import datetime
 
 from app.services.base_service import BaseService
-from app.services.shopee_service import ShopeeService
 from app.services.marketplace_service import MarketplaceBusiness
+
+_marketplace = MarketplaceBusiness()
+
+
+def _to_float(value) -> Optional[float]:
+    """Converte valores vindos da API (string/None) para float com segurança."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 @dataclass
@@ -105,31 +117,40 @@ class ArbitrageService(BaseService):
 
         # Buscar no Shopee
         try:
-            shopee_result = await ShopeeService.search_products(
+            shopee_result = await asyncio.to_thread(
+                _marketplace.search_products,
+                marketplace_name="shopee",
                 keyword=product_name,
+                page=1,
                 limit=1,
+                sortType=1,
             )
-            if shopee_result and len(shopee_result) > 0:
-                product = shopee_result[0]
-                opportunity.shopee_price = product.price
-                opportunity.shopee_commission = product.commission
-                opportunity.shopee_link = product.offer_link
-                cls.log_info(f"Shopee: R${product.price}")
+            nodes = (shopee_result or {}).get("nodes", [])
+            if nodes:
+                product = nodes[0]
+                opportunity.shopee_price = _to_float(product.get("price"))
+                opportunity.shopee_commission = _to_float(product.get("commissionRate"))
+                opportunity.shopee_link = product.get("offerLink")
+                cls.log_info(f"Shopee: R${opportunity.shopee_price}")
         except Exception as e:
             cls.log_warning(f"Erro ao buscar Shopee: {e}")
 
         # Buscar no Mercado Livre
         try:
-            ml_result = await MarketplaceBusiness.search_products(
+            ml_result = await asyncio.to_thread(
+                _marketplace.search_products,
+                marketplace_name="mercado_livre",
                 keyword=product_name,
+                page=1,
                 limit=1,
             )
-            if ml_result and len(ml_result) > 0:
-                product = ml_result[0]
-                opportunity.mercadolivre_price = product.price
-                opportunity.mercadolivre_commission = product.commission
-                opportunity.mercadolivre_link = product.offer_link
-                cls.log_info(f"Mercado Livre: R${product.price}")
+            nodes = (ml_result or {}).get("nodes", [])
+            if nodes:
+                product = nodes[0]
+                opportunity.mercadolivre_price = _to_float(product.get("price"))
+                opportunity.mercadolivre_commission = _to_float(product.get("commissionRate"))
+                opportunity.mercadolivre_link = product.get("offerLink")
+                cls.log_info(f"Mercado Livre: R${opportunity.mercadolivre_price}")
         except Exception as e:
             cls.log_warning(f"Erro ao buscar Mercado Livre: {e}")
 

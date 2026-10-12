@@ -16,7 +16,7 @@ from app.api.response import ResponseBuilder
 from app.api.auth import get_current_user
 
 router = APIRouter(
-    prefix="/api/trends",
+    prefix="/trends",
     tags=["trends"],
 )
 

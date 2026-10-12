@@ -74,15 +74,12 @@ class GoogleTrendsService(BaseService):
             return cls._cache[cache_key]
 
         try:
-            # Buscar do Google Trends
-            pytrends = TrendReq(hl="pt-BR", tz=180)  # tz=180 é UTC-3 (Brasil)
-            
-            # Buscar interesse ao longo do tempo
-            # Nota: pytrends.build() é o método correto
-            pytrends.build([keyword], timeframe=timeframe, geo=geo)
-
-            interest_over_time = pytrends.interest_over_time()
-            related_queries = pytrends.related_queries()
+            # pytrends faz chamadas HTTP bloqueantes (biblioteca síncrona).
+            # Rodar em thread separada evita travar o event loop do FastAPI
+            # enquanto espera a resposta do Google.
+            interest_over_time, related_queries = await asyncio.to_thread(
+                cls._fetch_from_google, keyword, timeframe, geo
+            )
 
             # Calcular tendência (rising/stable/declining)
             if len(interest_over_time) > 0:
@@ -102,7 +99,7 @@ class GoogleTrendsService(BaseService):
                 "keyword": keyword,
                 "trend": trend,
                 "interest_over_time": interest_over_time[keyword].tail(7).to_dict(),
-                "related_queries": related_queries.get(keyword, {}).get("top_queries", []).to_dict() if related_queries.get(keyword) else [],
+                "related_queries": cls._extract_related_queries(related_queries, keyword),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -116,6 +113,40 @@ class GoogleTrendsService(BaseService):
         except Exception as e:
             cls.log_error(f"Erro ao buscar tendência: {e}")
             return None
+
+    # =====================================================
+    # CHAMADA BLOQUEANTE AO GOOGLE (roda em thread via asyncio.to_thread)
+    # =====================================================
+
+    @staticmethod
+    def _fetch_from_google(keyword: str, timeframe: str, geo: str):
+        pytrends = TrendReq(hl="pt-BR", tz=180)  # tz=180 é UTC-3 (Brasil)
+        pytrends.build([keyword], timeframe=timeframe, geo=geo)
+        return pytrends.interest_over_time(), pytrends.related_queries()
+
+    # =====================================================
+    # EXTRAIR QUERIES RELACIONADAS (com segurança)
+    # =====================================================
+
+    @staticmethod
+    def _extract_related_queries(related_queries: Dict, keyword: str) -> List[Dict]:
+        """
+        Extrai a lista de queries relacionadas em alta ("rising") retornada
+        pelo pytrends. As chaves reais da resposta são "top" e "rising"
+        (cada uma é um DataFrame do pandas ou None) — nunca "top_queries".
+        """
+        entry = related_queries.get(keyword) if related_queries else None
+        if not entry:
+            return []
+
+        df = entry.get("rising")
+        if df is None or df.empty:
+            df = entry.get("top")
+
+        if df is None or df.empty:
+            return []
+
+        return df.to_dict("records")
 
     # =====================================================
     # BUSCAR MÚLTIPLAS KEYWORDS
